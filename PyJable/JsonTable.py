@@ -44,9 +44,9 @@ class JsonTable():
         
         "fixed": Columns with the same name for value in every row. You can change its value but that will essentially change it for every row; try to only change it in code that knows it's a fixed key, and sets and gets it with the fixed methods
         "shift": Where we have a listed literal item as a value, typically a string, float or int, sometimes lists of them, sometimes dictionaries or any other objects
-        "shiftIndex": Sometimes, shift columns will have the same value repeated many times. If its column name is in shift index, then the values in shift are integers, referring to the index in shiftIndex of the same column. I.e., if we have `shift["fur_color"] = [1,0,2]` and `shiftIndex["fur_color"] = ["green","orange","purple","red"], then the "fur_color"s are really "orange","green","purple"
+        "shiftIndex": Sometimes, shift columns will have the same value repeated many times. If its column name is in shift index, then the values in shift are integers, referring to the index in shiftIndex of the same column. I.e., if we have `shift["fur_color"] = [1,0,2]` and `shiftIndex["fur_color"] = ["green","orange","purple","red"]`, then the `"fur_color"`s are really `["orange","green","purple"]`
         
-        You can get a column "my_column' of data by taking `table["my_column"]`. You can get a row `j: int` as a dictionary with `table[j]`. You can get one item with `table[j,"my_column"]`
+        You can get a column `"my_column"` of data by taking `table["my_column"]`. You can get a row `j: int` as a dictionary with `table[j]`. You can get one item with `table[j,"my_column"]`
     """
     def __init__(
         self: Self,
@@ -741,9 +741,6 @@ class JsonTableIterator():
 # -- Initializers
 
 def fromDict(
-    """
-        Converts the raw json to JsonTable, without adding any structure
-    """
     data: dict[{
         "_fixed": dict[ str, any],
         "_shift": dict[ str, list],
@@ -751,6 +748,9 @@ def fromDict(
         "_meta": dict
     }]
     ) -> JsonTable:
+    """
+        Converts the raw json to JsonTable, without adding any structure
+    """
     return JsonTable(
         fixed = data["_fixed"],
         shift = data["_shift"],
@@ -815,15 +815,14 @@ def fromShiftIndexHeader(
 #/def fromShiftIndexHeader
 
 def fromHeaders(
-    """
-        Initializes a table with the given headers, but no data (with the possible exception of `fixed`)
-    """
     fixed: dict[ str, any ] | list[ str ] = {},
     shiftHeader: list[ str ] = [],
     shiftIndexHeader: list[ str ] = [],
     meta: any = {}
     ) -> JsonTable:
-    
+    """
+        Initializes a table with the given headers, but no data (with the possible exception of `fixed`)
+    """
     if isinstance( fixed, list ):
         # Convert list of strings to a map to `None`
         fixed = {
