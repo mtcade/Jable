@@ -42,14 +42,14 @@
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>fixed</strong> (<em>dict</em><em>[ </em><em>str</em><em>, </em><em>any</em><em> ]</em>) – Columns with the same name for value in every row. You can change its value but that will essentially change it for every row; try to only change it in code that knows it’s a fixed key, and sets and gets it with the fixed methods</p></li>
+<li><p><strong>fixed</strong> (<em>dict</em><em>[ </em><em>str</em><em>, </em><em>any</em><em> ]</em>) – Columns with the same name for value in every row. You can change its value but that will essentially change it for every row; try to only change it in code that knows it’s a fixed key, and sets and gets it with the fixed methods (<cite>.keys_fixed()</cite>, <cite>.get_fixed(…)</cite>)</p></li>
 <li><p><strong>shift</strong> (<em>dict</em><em>[ </em><em>str</em><em>, </em><em>list</em><em> ]</em>) – Where we have a listed literal item as a value, typically a string, float or int, sometimes lists of them, sometimes dictionaries or any other objects</p></li>
-<li><p><strong>shiftIndex</strong> (<em>dict</em><em>[ </em><em>shiftIndex</em><em>, </em><em>list</em><em> ]</em>) – Sometimes, shift columns will have the same value repeated many times. If its column name is in shift index, then the values in shift are integers, referring to the index in shiftIndex of the same column. I.e., if we have <cite>shift[“fur_color”] = [1,0,2]</cite> and <cite>shiftIndex[“fur_color”] = [“green”,”orange”,”purple”,”red”]</cite>, then the <cite>“fur_color”`s are really `[“orange”,”green”,”purple”]</cite></p></li>
-<li><p><strong>meta</strong> (<em>dict</em>) – Another arbitrary dictionary to hold domain specific data. No methods write or use this, so edit and read at will.</p></li>
+<li><p><strong>shiftIndex</strong> (<em>dict</em><em>[ </em><em>str list</em><em> ]</em>) – Sometimes, shift columns will have the same value repeated many times. If its column name is in shift index, then the values in shift are integers, referring to the index in shiftIndex of the same column. I.e., if we have <cite>shift[“fur_color”] = [1,0,2]</cite> and <cite>shiftIndex[“fur_color”] = [“green”,”orange”,”purple”,”red”]</cite>, then the <cite>“fur_color”`s are really `[“orange”,”green”,”purple”]</cite></p></li>
+<li><p><strong>meta</strong> (<em>dict</em>) – Another arbitrary dictionary to hold domain specific data, in the table as <cite>._meta</cite>. No methods write or use this, so edit and read at will or subclass.</p></li>
 </ul>
 </dd>
 </dl>
-<p>For <cite>table: JsonTable</cite> You can get a column <cite>my_column: str</cite> of data by taking <cite>table[my_column]</cite>. You can get a row <cite>j: int</cite> as a dictionary with <cite>table[j]</cite>. You can get one item with <cite>table[j,my_column]</cite></p>
+<p>For <cite>table: JsonTable</cite> You can get a column <cite>my_column: str</cite> of data by taking <cite>table[my_column]</cite>. You can get a row <cite>j: int</cite> as a dictionary with <cite>table[j]</cite>. You can get one item with <cite>table[j,my_column]</cite>; see <cite>.__getitem__(…)</cite></p>
 </dd></dl>
 
 

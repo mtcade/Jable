@@ -42,13 +42,12 @@ class JsonTable():
     """
         Stores column data as a combination of three parts:
         
-        :param dict[ str, any ] fixed: Columns with the same name for value in every row. You can change its value but that will essentially change it for every row; try to only change it in code that knows it's a fixed key, and sets and gets it with the fixed methods
+        :param dict[ str, any ] fixed: Columns with the same name for value in every row. You can change its value but that will essentially change it for every row; try to only change it in code that knows it's a fixed key, and sets and gets it with the fixed methods (`.keys_fixed()`, `.get_fixed(...)`)
         :param dict[ str, list ] shift: Where we have a listed literal item as a value, typically a string, float or int, sometimes lists of them, sometimes dictionaries or any other objects
-        :param dict[ shiftIndex, list ] shiftIndex: Sometimes, shift columns will have the same value repeated many times. If its column name is in shift index, then the values in shift are integers, referring to the index in shiftIndex of the same column. I.e., if we have `shift["fur_color"] = [1,0,2]` and `shiftIndex["fur_color"] = ["green","orange","purple","red"]`, then the `"fur_color"`s are really `["orange","green","purple"]`
-        :param dict meta: Another arbitrary dictionary to hold domain specific data. No methods write or use this, so edit and read at will.
-
+        :param dict[ str list ] shiftIndex: Sometimes, shift columns will have the same value repeated many times. If its column name is in shift index, then the values in shift are integers, referring to the index in shiftIndex of the same column. I.e., if we have `shift["fur_color"] = [1,0,2]` and `shiftIndex["fur_color"] = ["green","orange","purple","red"]`, then the `"fur_color"`s are really `["orange","green","purple"]`
+        :param dict meta: Another arbitrary dictionary to hold domain specific data, in the table as `._meta`. No methods write or use this, so edit and read at will or subclass.
         
-        For `table: JsonTable` You can get a column `my_column: str` of data by taking `table[my_column]`. You can get a row `j: int` as a dictionary with `table[j]`. You can get one item with `table[j,my_column]`
+        For `table: JsonTable` You can get a column `my_column: str` of data by taking `table[my_column]`. You can get a row `j: int` as a dictionary with `table[j]`. You can get one item with `table[j,my_column]`; see `.__getitem__(...)`
     """
     def __init__(
         self: Self,
@@ -88,20 +87,23 @@ class JsonTable():
         return self._len
     #
     
-    def keys( self ) -> list[ str ]:
+    def keys( self: Self ) -> list[ str ]:
+        """
+            Gets the equivalent of all column names of the table, including fixed and nonfixed
+        """
         return list( self._fixed.keys() ) + list( self._shift.keys() )
     #
     
     def keys_fixed( self: Self ) -> list[ str ]:
         """
-            Returns the keys for the fixed dictionary. This is so we don't have to have `_fixed` used externally
+            Returns the keys for the fixed dictionary. This is so we don't have to have `._fixed` used externally
         """
         return list( self._fixed.keys() )
     #
     
     def keys_shift( self: Self ) -> list[ str ]:
         """
-            All named keys in `_shift`, which includes `_shiftIndex`
+            All named keys in `._shift`, which includes `._shiftIndex`
         """
         return list( self._shift.keys() )
     #
@@ -134,7 +136,7 @@ class JsonTable():
         #
     #/def _item_by_rowCol
     
-    def __getitem__( self: Self, index: int | str | tuple[ int, str ] ) -> any:
+    def __getitem__( self: Self, index: int | str | tuple[ int | slice, str ] | list[ str | int ] ) -> any:
         """
             table[ i: int, col: str ]
                 -> any (specific value in table)
