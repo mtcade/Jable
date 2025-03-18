@@ -12,14 +12,14 @@ Get one or many items with bracket notation:
 
 .. automethod:: jable.JyFrame.__getitem__
 
-Filters with JyFilter
-**********************
+Filters with `JyFilter`
+*************************
 
 .. code:: python
    
    JyFilter: type = dict[ str, any ] | Callable[ dict[ str, any ], bool ]
-   
-Rows can be filtered with the type `JFilter` for several functions:
+
+A JyFilter is either a lambda run on a row (dictionary) returning a `bool`, or a dictionary which will return `True` if every value of a row matches those in the filter. It can be written by hand without instantiating any class, just the `lambda` or `dict`. Several methods and functions use `JyFilter`:
     - ``jable.JyFrame.does_matchIndex()``
     - ``jable.JyFrame.any_matchingIdices()``
     - ``jable.JyFrame.get_matchingIndices()``
@@ -30,14 +30,23 @@ Rows can be filtered with the type `JFilter` for several functions:
     - ``jable.filter_expectOne()``
 
 
-Other module functions
+Other Module Functions
 ************************
 
-These apply to a `JyFrame` without modifying it
+Used for getting new `JyFrame`, rows, and other values without modifying any existing `JyFrame`
+
+Initializing
+=============
 
 .. autofunction:: jable.fromHeaders
 
 .. autofunction:: jable.likeJyFrame
+
+.. autofunction:: jable.fromFile
+
+.. autofunction:: jable.from_file
+
+.. autofunction:: jable.fromFile_shift
 
 Filter Functions
 ==================

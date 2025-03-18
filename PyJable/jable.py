@@ -73,7 +73,7 @@ class JyFrame():
         :param dict[ str, any ] meta: Another arbitrary dictionary to hold domain specific data, in the jyFrame as `._meta`. No methods write or use this, so edit and read at will or subclass.
         :param dict[ str, type ] customTypes: A reference to use for deserializing string types from `keyTypes`. Gets checked before builtin types
         
-        For `jyFrame: JyFrame` You can get a column `my_column: str` of data by taking `jyFrame[my_column]`. You can get a row `j: int` as a dictionary with `jyFrame[j]`. You can get one item with `jyFrame[j,my_column]`; see `.__getitem__(...)`
+        see ``.__getitem__`` for acessing values
     """
     def __init__(
         self: Self,
