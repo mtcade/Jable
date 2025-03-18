@@ -14,7 +14,7 @@ from collections.abc import Iterable, MutableSequence
 from typing import Callable, Literal, Self
 from sys import path
 
-JFilter: type = dict[ str, any ] | Callable[ dict[ str, any ], bool ]
+# Dictionary representation of the data in a JFrame
 JFrameDict: type = dict[{
     "_fixed": dict[ str, any ],
     "_shift": dict[ str, list ],
@@ -23,7 +23,7 @@ JFrameDict: type = dict[{
     "_meta": dict[ str, any ]
 }]
 
-# Saves the string representation of the most common datatypes
+# SString representation of the most common datatypes
 # Does no enforcement or conversion; it can be set freely and can be any string
 # or type. It's for the user's convenience
 _BASE_TYPES: list[ type ] = [
@@ -34,6 +34,9 @@ _BASE_TYPES: list[ type ] = [
 _TYPES_DICT: dict[ str, type ] = {
     str( _type ): _type for _type in _BASE_TYPES
 }
+
+# JFilter: A way to check if rows match some criterion, either by equality with every value in a dictionary, or evaluating as true with a lambda taking the row dictionary as an input
+JFilter: type = dict[ str, any ] | Callable[ dict[ str, any ], bool ]
 
 def row_does_matchJFilter(
     row: dict[ str, any ],
@@ -68,7 +71,7 @@ class JFrame():
         :param dict[ str list ] shiftIndex: Sometimes, shift columns will have the same value repeated many times. If its column name is in shift index, then the values in shift are integers, referring to the index in shiftIndex of the same column. I.e., if we have `shift["fur_color"] = [1,0,2]` and `shiftIndex["fur_color"] = ["green","orange","purple","red"]`, then the `"fur_color"`s are really `["orange","green","purple"]`
         :param dict[ str, str | type ] keyTypes: Optional types to set for any columns. No enforcement is done by the JFrame itself, whether inserting or retriving. It is for your own use. These will be serialized as strings using `str` so add the appropriate functions for custom classes to serialize it as you want, and convert into a class upon reading. Includes support for basic python types
         :param dict[ str, any ] meta: Another arbitrary dictionary to hold domain specific data, in the table as `._meta`. No methods write or use this, so edit and read at will or subclass.
-        :param dict[ str, type ] customTypesDict: A reference
+        :param dict[ str, type ] customTypes: A reference to use for deserializing string types from `keyTypes`. Gets checked before builtin types
         
         For `table: JFrame` You can get a column `my_column: str` of data by taking `table[my_column]`. You can get a row `j: int` as a dictionary with `table[j]`. You can get one item with `table[j,my_column]`; see `.__getitem__(...)`
     """
