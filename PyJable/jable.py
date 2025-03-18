@@ -10,7 +10,7 @@
 
 import json
 
-from collections.abc import Iterable, MutableSequence
+from collections.abc import Sequence
 from typing import Callable, Literal, Self
 from sys import path
 
@@ -193,21 +193,41 @@ class JyFrame():
         #
     #/def _item_by_rowCol
     
-    def __getitem__( self: Self, index: int | str | tuple[ int | slice, str ] | list[ str | int ] ) -> any:
+    def __getitem__(
+        self: Self,
+        index: int | str | tuple[
+            int | slice | Sequence[ int ],
+            str | Sequence[ str ]
+        ] | slice | Sequence[
+            int
+        ] | Sequence[
+            str
+        ]
+        ) -> any:
         """
-            jyFrame[ i: int, col: str ]
-                -> any (specific value in jyFrame)
-            jyFrame[ i: int | Iterable[ int ] ]
-                -> Dictionary of row
-            jyFrame[ col:str ] | jyFrame[ rows: Iterable | Slice, col:str ]
-                -> List of items
-            jyFrame[ rows: Iterable[int] | Slice, cols: Iterable[ str ] )
-                -> JyFrame
+            :param int|str|tuple[int | slice | Sequence[ int ], str | Sequence[ str ] ]|slice|Sequence[ int ]|Sequence[ str ] index: Table accessor
+        
+            `jyFrame[ row: int, col: str ] -> any` A single item at a location
+
+            `jyFrame[ col: str ] -> list` The entire column of values
+
+            `jyFrame[ row: int ] -> dict[ str, any ]` One row as a dictionary with all keys
+
+            `jyFrame[ rows: Sequence[ int ] | slice ] -> JyFrame` Subset of rows, all columns
+
+            `jyFrame[ columns: Sequence[ str ] ] -> JyFrame` Subset of columns, all rows
+
+            `jyFrame[ row: int, columns: Sequence[ str ] ] -> dict[ str, any ]` One row as a dictionary with subset of columns
+
+            `jyFrame[ rows: Sequence[ int ] | slice, col: str ] -> list`: One column, subset of rows as a list of those items. (If you want to keep some index, then have that index as another column)
+
+            `jyFrame[ rows: Sequence[ int ] | slice, columns: Sequence[ str ] ] -> jyFrame` Subset of both columns and columns
         """
-        if isinstance( index, tuple ):
-            assert len( index ) == 2
-            # TODO: handle slices for first item, iterables for second
+        # -- Double value, like `jyFrame[ row, col ]`
+        if isinstance( index, tuple ) and len( index ) == 2:
+            # TODO: handle slices for first item, sequences for second
             row = index[0]
+            column = index[1]
             if isinstance( row, int ):
                 row = [ row ]
             #
@@ -215,7 +235,7 @@ class JyFrame():
                 # Row is a slice
                 # Convert row to indices
                 row = [i for i in range( *row.indices(self._len) ) ]
-            elif isinstance( row, Iterable ):
+            elif isinstance( row, Sequence ):
                 # List of ints, most likely
                 ...
             #
@@ -223,8 +243,7 @@ class JyFrame():
                 raise Exception("bad row={}".format( row ) )
             #
             
-            column = index[1]
-            if isinstance( column, Iterable ):
+            if isinstance( column, Sequence ):
                 _self_keys: list[ str ] = self.keys()
                 assert all( col in _self_keys for col in column )
                 if len( row ) == 1:
@@ -281,10 +300,11 @@ class JyFrame():
                 #/switch len( row )
             #
             else:
-                # TODO: return new jyFrame if column is iterable
+                # TODO: return new jyFrame if column is a sequence
                 raise Exception("Bad column={}".format( column ))
-            #
+            #/switch { type index }
         #
+        # -- Single Items
         elif isinstance( index, int ):
             item = self._fixed | {
                 key: self._shift[ key ][ index ] for key in self._shift
@@ -309,6 +329,17 @@ class JyFrame():
             else:
                 raise Exception("Bad column={}".format(index))
             #
+        #
+        elif isinstance( index, Sequence ):
+            if all( isinstance( val, str ) for val in index ):
+                raise Exception("UC")
+            #
+            if all ( isinstance( int, str ) for val in index ):
+                raise Exception("UC")
+            #
+        #
+        elif isinstance( index, slice ):
+            raise Exception("UC")
         else:
             raise Exception("Bad index={}".format(index))
         #/switch { type( index ) }
@@ -918,7 +949,29 @@ def fromHeaders(
     )
 #/def fromHeaders
 
-def fromDict_shift( data: dict[ str, list ] ) -> JyFrame:
+def fromDict_shift(
+    data: dict[ str, list ],
+    validate: bool = True
+    ) -> JyFrame:
+    """
+        :param dict[ str, list ] data: Reads a dictionary of lists, with keys as column names and values as those columns. Result is making the shift dict from `data`
+        :param bool validate: If `True` check each value of `data` is a list of the same length
+    """
+    # Check for correct data lengths
+    if validate:
+        assert isinstance( data, dict )
+        data_len: int | None = None
+        for val in data.values():
+            assert isinstance( val, list )
+            if data_len is None:
+                data_len = len( val )
+            #
+            else:
+                assert len( val ) == data_len
+            #/if data_len is None
+        #/for val in data.values()
+    #/if validate
+    
     return JyFrame( shift = data )
 #/def fromDict_shift
 
@@ -926,6 +979,9 @@ def likeJyFrame(
     jyFrame: JyFrame
     ) -> JyFrame:
     """
+        :param JyFrame jyFrame: Frame to intialize like, copying fixed, the shift header, the shift index header, keyTypes, and meta
+        
+        
         Gives a blank jyFrame with copied headers
     """
     return fromHeaders(
@@ -948,6 +1004,11 @@ def fromFile(
     update: bool = False
     ) -> JyFrame:
     """
+        :param str fp: File path to read
+        :param json.JSONDecoder|None decoder: Optional custom decoder
+        :param bool strict: If `True` require exact correct formatting, will raise if not
+        :param bool update: If `True` and `strict = False` it will update the file on the disk with missing fields
+        
         Reads directly as a jyFrame on the disk in json form
     """
     with open( fp, 'r' ) as _file:
@@ -966,7 +1027,14 @@ def fromFile(
                 )
             )
         #/if any( key not in data for key in _REQUIRED_KEYS )
-
+        if any( key not in _REQUIRED_KEYS for key in data ):
+            raise Exception(
+                "Unrecognized file keys={}".format(
+                    data.keys()
+                )
+            )
+        #
+        
         data_all = {
             key: {} for key in _REQUIRED_KEYS
         } | data
@@ -988,14 +1056,23 @@ def fromFile(
 #/def fromFile
 
 # Synonoym: fromFile
-def from_file( fp: str, decoder: json.JSONDecoder | None = None ) -> JyFrame:
+def from_file(
+    fp: str,
+    decoder: json.JSONDecoder | None = None
+    ) -> JyFrame:
     """
+        :param str fp: File path to read
+        :param json.JSONDecoder|None decoder: Optional customer decoder
+        
         Directly reads from a regular json on the disc. Synonym to `fromFile()`
     """
     return fromFile( fp = fp, decoder = decoder )
 #/def fromFile
 
-def fromFile_shift( fp: str, decoder: json.JSONDecoder | None = None ) -> JyFrame:
+def fromFile_shift(
+    fp: str,
+    decoder: json.JSONDecoder | None = None
+    ) -> JyFrame:
     """
         Reads the jyFrame as the shift data only, with no fixed and no meta
         
@@ -1016,6 +1093,9 @@ def _does_matchRow(
     row: dict[ str, any ]
     ) -> bool:
     """
+        :param JyFilter jyFilter: Row tester
+        :param dict[ str, any ] row: Row to test against `jyFilter`
+        
         Checks jyFilter against a row, whether a lambda or a dict
     """
     if isinstance( jyFilter, dict ):
@@ -1034,6 +1114,9 @@ def filter(
     jyFilter: JyFilter
     ) -> JyFrame:
     """
+        :param JyFrame jyFrame: jyFrame to filter
+        :param JyFilter jyFilter: Row tester
+        
         Gets a new jyFrame with the same header, adding in rows where `jyFilter` is true
     """
     
@@ -1060,33 +1143,35 @@ def filter_returnFirst(
     allow_zero: bool = False
     ) -> dict[ str, any ]:
     """
+        :param JyFrame jyFrame: jyFrame to filter
+        :param JyFilter jyFilter: Row tester
+        :param bool allow_zero: If `True` return an empty dictionary with no matches. If `False` throw an error instead
+        
         Return the first row matching the filter. If none match, it will return `{}` if `allow_zero`, otherwise raise.
         
         Used like `filter_expectOne()` except you're very confident there's only one or you need the first. Also useful for finding the first row after a specified time
     """
-    new_jyFrame: JyFrame = likeJyFrame( jyFrame )
     if len( jyFrame ) == 0:
-        return new_jyFrame
+        return {}
     #
     
-    
+    row: dict[ str, any ]
     for row in jyFrame:
         if _does_matchRow(
             jyFilter,
             row
         ):
-            new_jyFrame.append( row )
-            break
+            return row
         #/if _does_matchRow( ... )
     #/for row in jyFrame
     
-    if len( new_jyFrame ) >= 1 or allow_zero:
-        return new_jyFrame
+    # Made it here, it means no matches
+    if allow_zero:
+        return {}
     #
     else:
         raise Exception("No matching rows for jyFilter={}".format( jyFilter ))
     #/if len( new_jyFrame ) >= 1 or allow_zero/else
-    
     raise Exception("Unexpected EOF")
 #/def filter_returnFirst
 
@@ -1096,9 +1181,13 @@ def filter_expectOne(
     allow_zero: bool = False
     ) -> dict[ str, any ]:
     """
-        Runs jyFilter but raises if you have more than one result. `allow_zero` will return `{}` if true, otherwise will also raise with zero results
+        :param JyFrame jyFrame: jyFrame to filter
+        :param JyFilter jyFilter: Row tester
+        :param bool allow_zero: If `True` return an empty dictionary with no matches. If `False` throw an error instead
         
-        Essentially used when you expect a unique, and present row, sort of like a primary key
+        Runs jyFilter but raises if you have more than one result. `allow_zero = True` will return with no results, while
+        
+        Essentially used when you expect a unique, and present row, sort of like a primary key, and want to double check there's only one matching row. If you trust there will be only one matching row, use `.filter_returnFirst(...)`.
         
         Returns a row as a dict
     """
@@ -1112,6 +1201,7 @@ def filter_expectOne(
             raise Exception("Zero results")
         #
     #
+    
     if len( new_jyFrame ) == 1:
         return new_jyFrame[0]
     #
@@ -1133,6 +1223,9 @@ def sortedBy(
     by: list[ str ]
     ) -> JyFrame:
     """
+        :param JyFrame jyFrame: Frame to return new sorted version of
+        :param list[ str ] by: Columns by which to sort rows
+        
         Returns a new jyFrame, sorting by the values in the `by` list of columns
         Does not change the order of columns at all
     """

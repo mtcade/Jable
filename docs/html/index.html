@@ -13,7 +13,7 @@
     <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="&lt;no title&gt;" href="jable.html" /> 
+    <link rel="next" title="The JyFrame Class" href="jable.html" /> 
   </head><body>
     <div class="related" role="navigation" aria-label="related navigation">
       <h3>Navigation</h3>
@@ -22,7 +22,7 @@
           <a href="genindex.html" title="General Index"
              accesskey="I">index</a></li>
         <li class="right" >
-          <a href="jable.html" title="&lt;no title&gt;"
+          <a href="jable.html" title="The JyFrame Class"
              accesskey="N">next</a> |</li>
         <li class="nav-item nav-item-0"><a href="#">Jable - Json Tables</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Welcome to Jable</a></li> 
@@ -36,31 +36,22 @@
             
   <section id="welcome-to-jable">
 <h1>Welcome to Jable<a class="headerlink" href="#welcome-to-jable" title="Link to this heading">¶</a></h1>
-<p>Jable is a simple too for serializing simple tabular data for casual use on the disk, as an improvement to the .csv format. The JFrame is an unassuming representation of the Json Table (jable). has rows as numbers, columns as strings. There are two reasons to use it over .csv:</p>
+<p>Jable is a simple too for serializing simple tabular data for casual use on the disk, as an improvement to the .csv format.</p>
+<p>The <cite>JyFrame</cite> is a simple, unassuming representation of the Json Table (jable). It has rows as numbers, columns as strings. There are two reasons to use it over .csv:</p>
 <blockquote>
 <div><ol class="arabic simple">
 <li><p>It can encode anything serializable to Json as an item in a cell, with support for custom encoders and decoders</p></li>
 <li><p>It can save space by not repeating the same values over and over</p></li>
-<li><p>It ca</p></li>
 </ol>
 </div></blockquote>
 <p>Otherwise, it does not offer many powers other tabular data do not.</p>
 <div class="toctree-wrapper compound">
 <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="jable.html"><code class="docutils literal notranslate"><span class="pre">JyFrame</span></code></a><ul>
-<li class="toctree-l2"><a class="reference internal" href="jable.html#jable.JyFrame.any_matchingIndices"><code class="docutils literal notranslate"><span class="pre">JyFrame.any_matchingIndices()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="jable.html#jable.JyFrame.append"><code class="docutils literal notranslate"><span class="pre">JyFrame.append()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="jable.html#jable.JyFrame.as_dict"><code class="docutils literal notranslate"><span class="pre">JyFrame.as_dict()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="jable.html#jable.JyFrame.does_matchIndex"><code class="docutils literal notranslate"><span class="pre">JyFrame.does_matchIndex()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="jable.html#jable.JyFrame.get_fixed"><code class="docutils literal notranslate"><span class="pre">JyFrame.get_fixed()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="jable.html#jable.JyFrame.get_matchingIndices"><code class="docutils literal notranslate"><span class="pre">JyFrame.get_matchingIndices()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="jable.html#jable.JyFrame.keys"><code class="docutils literal notranslate"><span class="pre">JyFrame.keys()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="jable.html#jable.JyFrame.keys_fixed"><code class="docutils literal notranslate"><span class="pre">JyFrame.keys_fixed()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="jable.html#jable.JyFrame.remove"><code class="docutils literal notranslate"><span class="pre">JyFrame.remove()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="jable.html#jable.JyFrame.remove_where"><code class="docutils literal notranslate"><span class="pre">JyFrame.remove_where()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="jable.html#jable.JyFrame.set_where"><code class="docutils literal notranslate"><span class="pre">JyFrame.set_where()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="jable.html#jable.JyFrame.write_file"><code class="docutils literal notranslate"><span class="pre">JyFrame.write_file()</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="jable.html">The <cite>JyFrame</cite> Class</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="jable.html#jable.JyFrame"><code class="docutils literal notranslate"><span class="pre">JyFrame</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="jable.html#filters-with-jyfilter">Filters with JyFilter</a></li>
+<li class="toctree-l2"><a class="reference internal" href="jable.html#other-module-functions">Other module functions</a></li>
 </ul>
 </li>
 </ul>
@@ -93,7 +84,7 @@
   <div>
     <h4>Next topic</h4>
     <p class="topless"><a href="jable.html"
-                          title="next chapter">&lt;no title&gt;</a></p>
+                          title="next chapter">The <cite>JyFrame</cite> Class</a></p>
   </div>
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
@@ -123,7 +114,7 @@
           <a href="genindex.html" title="General Index"
              >index</a></li>
         <li class="right" >
-          <a href="jable.html" title="&lt;no title&gt;"
+          <a href="jable.html" title="The JyFrame Class"
              >next</a> |</li>
         <li class="nav-item nav-item-0"><a href="#">Jable - Json Tables</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Welcome to Jable</a></li> 

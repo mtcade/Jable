@@ -1,9 +1,56 @@
-The `JyFrame` is a simple, unassuming representation of the Json Table (jable) has rows as numbers, columns as strings. There are two reasons to use it over .csv:
+The `JyFrame` Class
+####################
 
-    1. It can encode anything serializable to Json as an item in a cell, with support for custom encoders and decoders
-    2. It can save space by not repeating the same values over and over
-    
-Otherwise, it does not offer many powers other tabular data do not.
+The `JyFrame` can be treated like tabular data, indexed by a row integer and column string.
 
 .. autoclass:: jable.JyFrame
     :members: keys, keys_fixed, get_fixed, get_fixed_withDefaultDict, as_dict, does_matchIndex, any_matchingIndices, get_matchingIndices, set_where, append, remove, remove_where, write_file
+
+Iterating over it gives each row as a dictionary.
+
+Get one or many items with bracket notation:
+
+.. automethod:: jable.JyFrame.__getitem__
+
+Filters with JyFilter
+**********************
+
+.. code:: python
+   
+   JyFilter: type = dict[ str, any ] | Callable[ dict[ str, any ], bool ]
+   
+Rows can be filtered with the type `JFilter` for several functions:
+    - ``jable.JyFrame.does_matchIndex()``
+    - ``jable.JyFrame.any_matchingIdices()``
+    - ``jable.JyFrame.get_matchingIndices()``
+    - ``jable.JyFrame.set_where()``
+    - ``jable.JyFrame.remove_where()``
+    - ``jable.filter()``
+    - ``jable.filter_returnFirst()``
+    - ``jable.filter_expectOne()``
+
+
+Other module functions
+************************
+
+These apply to a `JyFrame` without modifying it
+
+.. autofunction:: jable.fromHeaders
+
+.. autofunction:: jable.likeJyFrame
+
+Filter Functions
+==================
+
+.. autofunction:: jable.filter
+
+.. autofunction:: jable.filter_returnFirst
+
+.. autofunction:: jable.filter_expectOne
+
+Other transformations
+========================
+
+.. autofunction:: jable.sortedBy
+
+
