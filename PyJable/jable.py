@@ -14,8 +14,8 @@ from collections.abc import Iterable, MutableSequence
 from typing import Callable, Literal, Self
 from sys import path
 
-# Dictionary representation of the data in a JFrame
-JFrameDict: type = dict[{
+# Dictionary representation of the data in a JyFrame
+JyFrameDict: type = dict[{
     "_fixed": dict[ str, any ],
     "_shift": dict[ str, list ],
     "_shiftIndex": dict[ str, list ],
@@ -35,45 +35,45 @@ _TYPES_DICT: dict[ str, type ] = {
     str( _type ): _type for _type in _BASE_TYPES
 }
 
-# JFilter: A way to check if rows match some criterion, either by equality with every value in a dictionary, or evaluating as true with a lambda taking the row dictionary as an input
-JFilter: type = dict[ str, any ] | Callable[ dict[ str, any ], bool ]
+# JyFilter: A way to check if rows match some criterion, either by equality with every value in a dictionary, or evaluating as true with a lambda taking the row dictionary as an input
+JyFilter: type = dict[ str, any ] | Callable[ dict[ str, any ], bool ]
 
-def row_does_matchJFilter(
+def row_does_matchJyFilter(
     row: dict[ str, any ],
-    jFilter: JFilter
+    jyFilter: JyFilter
     ) -> bool:
     """
-        The way to check if a row dictionary matches a jFilter
+        The way to check if a row dictionary matches a jyFilter
         
         For dictionaries, check equality on every key
         
         For Callables, just run the Callable on the row
     """
-    if isinstance( jFilter, dict ):
+    if isinstance( jyFilter, dict ):
         return all(
-            row[ key ] == jFilter[ key ] for key in jFilter
+            row[ key ] == jyFilter[ key ] for key in jyFilter
         )
     #
     
-    if isinstance( jFilter, Callable ):
-        return jFilter( row )
+    if isinstance( jyFilter, Callable ):
+        return jyFilter( row )
     #
     
-    raise Exception("Unrecognized jFilter={}".format(jFilter))
-#/def row_does_matchJFilter
+    raise Exception("Unrecognized jyFilter={}".format(jyFilter))
+#/def row_does_matchJyFilter
 
-class JFrame():
+class JyFrame():
     """
         Stores column data as a combination of three parts:
         
         :param dict[ str, any ] fixed: Columns with the same name for value in every row. You can change its value but that will essentially change it for every row; try to only change it in code that knows it's a fixed key, and sets and gets it with the fixed methods (`.keys_fixed()`, `.get_fixed(...)`)
         :param dict[ str, list ] shift: Where we have a listed literal item as a value, typically a string, float or int, sometimes lists of them, sometimes dictionaries or any other objects
         :param dict[ str list ] shiftIndex: Sometimes, shift columns will have the same value repeated many times. If its column name is in shift index, then the values in shift are integers, referring to the index in shiftIndex of the same column. I.e., if we have `shift["fur_color"] = [1,0,2]` and `shiftIndex["fur_color"] = ["green","orange","purple","red"]`, then the `"fur_color"`s are really `["orange","green","purple"]`
-        :param dict[ str, str | type ] keyTypes: Optional types to set for any columns. No enforcement is done by the JFrame itself, whether inserting or retriving. It is for your own use. These will be serialized as strings using `str` so add the appropriate functions for custom classes to serialize it as you want, and convert into a class upon reading. Includes support for basic python types
-        :param dict[ str, any ] meta: Another arbitrary dictionary to hold domain specific data, in the table as `._meta`. No methods write or use this, so edit and read at will or subclass.
+        :param dict[ str, str | type ] keyTypes: Optional types to set for any columns. No enforcement is done by the JyFrame itself, whether inserting or retriving. It is for your own use. These will be serialized as strings using `str` so add the appropriate functions for custom classes to serialize it as you want, and convert into a class upon reading. Includes support for basic python types
+        :param dict[ str, any ] meta: Another arbitrary dictionary to hold domain specific data, in the jyFrame as `._meta`. No methods write or use this, so edit and read at will or subclass.
         :param dict[ str, type ] customTypes: A reference to use for deserializing string types from `keyTypes`. Gets checked before builtin types
         
-        For `table: JFrame` You can get a column `my_column: str` of data by taking `table[my_column]`. You can get a row `j: int` as a dictionary with `table[j]`. You can get one item with `table[j,my_column]`; see `.__getitem__(...)`
+        For `jyFrame: JyFrame` You can get a column `my_column: str` of data by taking `jyFrame[my_column]`. You can get a row `j: int` as a dictionary with `jyFrame[j]`. You can get one item with `jyFrame[j,my_column]`; see `.__getitem__(...)`
     """
     def __init__(
         self: Self,
@@ -146,7 +146,7 @@ class JFrame():
     
     def keys( self: Self ) -> list[ str ]:
         """
-            Gets the equivalent of all column names of the table, including fixed and nonfixed
+            Gets the equivalent of all column names of the jyFrame, including fixed and nonfixed
         """
         return list( self._fixed.keys() ) + list( self._shift.keys() )
     #
@@ -167,11 +167,11 @@ class JFrame():
     
     # -- Getting and Iterating
     
-    def __iter__( self: Self ) -> "JFrameIterator":
+    def __iter__( self: Self ) -> "JyFrameIterator":
         """
             Goes through by row giving each row as a dictionary
         """
-        return JFrameIterator( self )
+        return JyFrameIterator( self )
     #
     
     def _item_by_rowCol(
@@ -195,14 +195,14 @@ class JFrame():
     
     def __getitem__( self: Self, index: int | str | tuple[ int | slice, str ] | list[ str | int ] ) -> any:
         """
-            table[ i: int, col: str ]
-                -> any (specific value in table)
-            table[ i: int | Iterable[ int ] ]
+            jyFrame[ i: int, col: str ]
+                -> any (specific value in jyFrame)
+            jyFrame[ i: int | Iterable[ int ] ]
                 -> Dictionary of row
-            table[ col:str ] | table[ rows: Iterable | Slice, col:str ]
+            jyFrame[ col:str ] | jyFrame[ rows: Iterable | Slice, col:str ]
                 -> List of items
-            table[ rows: Iterable[int] | Slice, cols: Iterable[ str ] )
-                -> JFrame
+            jyFrame[ rows: Iterable[int] | Slice, cols: Iterable[ str ] )
+                -> JyFrame
         """
         if isinstance( index, tuple ):
             assert len( index ) == 2
@@ -239,7 +239,7 @@ class JFrame():
                         #/if item[ col ] is not None and col in self._shiftIndex
                     #/for col in item
                 elif len( row ) > 1:
-                    return JFrame(
+                    return JyFrame(
                         fixed = {
                             col: val for col, val in self._fixed.items() if col in column
                         },
@@ -281,7 +281,7 @@ class JFrame():
                 #/switch len( row )
             #
             else:
-                # TODO: return new table if column is iterable
+                # TODO: return new jyFrame if column is iterable
                 raise Exception("Bad column={}".format( column ))
             #
         #
@@ -316,6 +316,9 @@ class JFrame():
     
     def get_fixed( self: Self, key: str, default: any = None ) -> any:
         """
+            :param str key: Value to get from `._fixed`
+            :param any default: Value to get if key not present in `._fixed`, if not `None`
+            
             Gets a value known to be associated with a fixed key. This means we don't have to access any shift lists
         """
         if default is None or key in self._fixed:
@@ -332,11 +335,13 @@ class JFrame():
             key: self.get_fixed( key, val ) for key,val in default.items()
         }
         """
+            :param dict[ str, any ] default: Values to put in result if the corresponding keys are not present
+            
             Allows programs to give a default value for keys which are not in `_fixed`, and otherwise gives the `_fixed` values. This saves the headache of repeatedly checking `.keys_fixed()`
         """
     #/def get_fixed_withDefaultDict
     
-    def as_dict( self: Self ) -> JFrameDict:
+    def as_dict( self: Self ) -> JyFrameDict:
         """
             The dictionary, ready to be saved to the disk as json
             
@@ -363,35 +368,35 @@ class JFrame():
     
     def does_matchIndex(
         self: Self,
-        jFilter: JFilter,
+        jyFilter: JyFilter,
         index: int
         ) -> bool:
         """
-            Check to see if a row matches a given jFilter
+            Check to see if a row matches a given jyFilter
         """
-        return row_does_matchJFilter(
+        return row_does_matchJyFilter(
             row = self[ index ],
-            jFilter = jFilter
+            jyFilter = jyFilter
         )
     #/def does_matchIndex
     
     def any_matchingIndices(
         self: Self,
-        jFilter: JFilter
+        jyFilter: JyFilter
         ) -> bool:
         """
-            Says if at least one row matches jFilter
+            Says if at least one row matches jyFilter
         """
-        if isinstance( jFilter, dict ):
-            fixed_keys = [ key for key in jFilter if key in self._fixed ]
-            if not all( self._fixed[key] == jFilter[key] for key in fixed_keys ):
+        if isinstance( jyFilter, dict ):
+            fixed_keys = [ key for key in jyFilter if key in self._fixed ]
+            if not all( self._fixed[key] == jyFilter[key] for key in fixed_keys ):
                 return False
             #
         #
         
         return any(
             self.does_matchIndex(
-                jFilter = jFilter,
+                jyFilter = jyFilter,
                 index = index
             ) for index in range( len( self ) )
         )
@@ -400,21 +405,21 @@ class JFrame():
     
     def get_matchingIndices(
         self: Self,
-        jFilter: JFilter
+        jyFilter: JyFilter
         ) -> list[ int ]:
         """
-            Get a list of indices which match jFilter
+            Get a list of indices which match jyFilter
         """
-        if isinstance( jFilter, dict ):
-            fixed_keys = [ key for key in jFilter if key in self._fixed ]
-            if not all( self._fixed[key] == jFilter[key] for key in fixed_keys ):
+        if isinstance( jyFilter, dict ):
+            fixed_keys = [ key for key in jyFilter if key in self._fixed ]
+            if not all( self._fixed[key] == jyFilter[key] for key in fixed_keys ):
                 return []
             #
         #
         
         return [
             index for index in range( len( self ) ) if self.does_matchIndex(
-                jFilter = jFilter,
+                jyFilter = jyFilter,
                 index = index
             )
         ]
@@ -512,11 +517,11 @@ class JFrame():
         """
             Used in three primary ways:
             
-            `table[ row: int, col: str ] = newVal: any`: Set single value
-            `table[ row: int ] = newRow: dict`: Set new row
-            `table[ col: str ] = newVal: any`, with `col` in `self._fixed.keys()`: Set a fixed value
-            `table[ col: str ] = newColumn: list[ any ]`: Set entirety of new column
-            `table[ col: str ] = rowsDict: dict[ row: int, newvalue: any ]`: for a dictionary indexed by integers, set those rows for `col` to be the value in the dict
+            `jyFrame[ row: int, col: str ] = newVal: any`: Set single value
+            `jyFrame[ row: int ] = newRow: dict`: Set new row
+            `jyFrame[ col: str ] = newVal: any`, with `col` in `self._fixed.keys()`: Set a fixed value
+            `jyFrame[ col: str ] = newColumn: list[ any ]`: Set entirety of new column
+            `jyFrame[ col: str ] = rowsDict: dict[ row: int, newvalue: any ]`: for a dictionary indexed by integers, set those rows for `col` to be the value in the dict
         """
         if isinstance( index, int ) and isinstance( newvalue, dict ):
             self._set_index_withDict( index = index, row = newvalue )
@@ -563,13 +568,13 @@ class JFrame():
     
     def set_where(
         self: Self,
-        jFilter: JFilter,
+        jyFilter: JyFilter,
         row: dict[ str, any ],
         limit: int | None = None,
         verbose: int = 0
     ) -> None:
         """
-            Update every row with the given literal row, if it matches jFilter
+            Update every row with the given literal row, if it matches jyFilter
             
             You can set a max number of rows to be updated, speeding things up by ending early
         """
@@ -577,12 +582,12 @@ class JFrame():
             limit = len( self )
         #
         
-        if isinstance( jFilter, dict ):
+        if isinstance( jyFilter, dict ):
             # Convert dict to proper selection
-            _lambda = lambda _row: all( _row[ key ] == val for key, val in jFilter.items() )
+            _lambda = lambda _row: all( _row[ key ] == val for key, val in jyFilter.items() )
         #
         else:
-            _lambda = jFilter
+            _lambda = jyFilter
         #
         
         update_count: int = 0
@@ -744,16 +749,16 @@ class JFrame():
     
     def remove_where(
         self: Self,
-        jFilter: JFilter
+        jyFilter: JyFilter
         ) -> None:
         """
-            Remove indices matching jFilter via `.get_matchingIndices`
+            Remove indices matching jyFilter via `.get_matchingIndices`
         """
         # Have to change indices as we remove them
         # Since we go from low to high, subtract 1 from the matching index for each
         #   index previously removed
         matchingIndices: list[ int ] = self.get_matchingIndices(
-            jFilter
+            jyFilter
         )
         self.remove(
             matchingIndices
@@ -768,7 +773,7 @@ class JFrame():
         encoder: json.JSONEncoder | None = None
         ) -> None:
         """
-            Standard method to write to a file as a json, which can be initialized into a table via `fromDict(...)` after reading
+            Standard method to write to a file as a json, which can be initialized into a jyFrame via `fromDict(...)` after reading
         """
         with open( fp, mode ) as _file:
             json.dump(
@@ -780,43 +785,43 @@ class JFrame():
         
         return
     #/def write_file
-#/class JFrame
+#/class JyFrame
 
-class JFrameIterator():
+class JyFrameIterator():
     def __init__(
         self: Self,
-        table: JFrame
+        jyFrame: JyFrame
     ):
         self._index = 0
-        self._table = table
+        self._jyFrame = jyFrame
     #
     
     def __next__( self: Self ) -> dict:
-        if self._index > len( self._table ) - 1:
+        if self._index > len( self._jyFrame ) - 1:
             raise StopIteration
         #
         else:
             self._index += 1
-            return self._table._fixed | {
-                key: self._table._shiftIndex[ key ][ val[ self._index-1 ] ] \
-                    for key, val in self._table._shift.items() if key in self._table._shiftIndex
+            return self._jyFrame._fixed | {
+                key: self._jyFrame._shiftIndex[ key ][ val[ self._index-1 ] ] \
+                    for key, val in self._jyFrame._shift.items() if key in self._jyFrame._shiftIndex
             } | {
                 key: val[ self._index-1 ] \
-                    for key, val in self._table._shift.items() if key not in self._table._shiftIndex
+                    for key, val in self._jyFrame._shift.items() if key not in self._jyFrame._shiftIndex
             }
-        #/if self._index > len( self._table ) - 1/else
+        #/if self._index > len( self._jyFrame ) - 1/else
     #/def __next__
-#/class JFrameIterator
+#/class JyFrameIterator
 
 # -- Initializers
 
 def fromDict(
-    jFrame: JFrameDict
-    ) -> JFrame:
+    jFrame: JyFrameDict
+    ) -> JyFrame:
     """
-        Converts the raw json to JFrame, without adding any structure
+        Converts the raw json to JyFrame, without adding any structure
     """
-    return JFrame(
+    return JyFrame(
         fixed = data["_fixed"],
         shift = data["_shift"],
         shiftIndex = data["_shiftIndex"],
@@ -831,7 +836,7 @@ def fromShiftIndexHeader(
     shiftIndexHeader: list[ str ] = [],
     keyTypes: dict[ str, type ] = {},
     meta: any = {}
-    ) -> JFrame:
+    ) -> JyFrame:
     from copy import deepcopy
     shiftIndex = {}
     
@@ -849,7 +854,7 @@ def fromShiftIndexHeader(
         }
     #
     
-    table: JFrame = JFrame(
+    jyFrame: JyFrame = JyFrame(
         fixed = fixed,
         shiftIndex = {
             _key: [] for _key in shiftIndexHeader
@@ -862,7 +867,7 @@ def fromShiftIndexHeader(
     )
     
     if shift == {}:
-        return table
+        return jyFrame
     #
     
     # Add items
@@ -873,14 +878,14 @@ def fromShiftIndexHeader(
     )
     
     for i in range( _len ):
-        table.append(
+        jyFrame.append(
             {
                 _key: _val[ i ] for _key, _val in shift.items()
             }
         )
     #
     
-    return table
+    return jyFrame
 #/def fromShiftIndexHeader
 
 def fromHeaders(
@@ -889,9 +894,9 @@ def fromHeaders(
     shiftIndexHeader: list[ str ] = [],
     keyTypes: dict[ str, type ] = {},
     meta: any = {}
-    ) -> JFrame:
+    ) -> JyFrame:
     """
-        Initializes a table with the given headers, but no data (with the possible exception of `fixed`)
+        Initializes a jyFrame with the given headers, but no data (with the possible exception of `fixed`)
     """
     if isinstance( fixed, list ):
         # Convert list of strings to a map to `None`
@@ -904,7 +909,7 @@ def fromHeaders(
         col for col in shiftHeader if col not in shiftIndexHeader
     ]
     
-    return JFrame(
+    return JyFrame(
         fixed = fixed,
         shift = { col: [] for col in shiftHeaderAll },
         shiftIndex = { col: [] for col in shiftIndexHeader },
@@ -913,43 +918,43 @@ def fromHeaders(
     )
 #/def fromHeaders
 
-def fromDict_shift( data: dict[ str, list ] ) -> JFrame:
-    return JFrame( shift = data )
+def fromDict_shift( data: dict[ str, list ] ) -> JyFrame:
+    return JyFrame( shift = data )
 #/def fromDict_shift
 
-def likeTable(
-    table: JFrame
-    ) -> JFrame:
+def likeJyFrame(
+    jyFrame: JyFrame
+    ) -> JyFrame:
     """
-        Gives a blank table with copied headers
+        Gives a blank jyFrame with copied headers
     """
     return fromHeaders(
-        fixed = table._fixed,
+        fixed = jyFrame._fixed,
         shiftHeader = [
-            key for key in table._shift.keys()
+            key for key in jyFrame._shift.keys()
         ],
         shiftIndexHeader = [
-            key for key in table._shiftIndex.keys()
+            key for key in jyFrame._shiftIndex.keys()
         ],
-        keyTypes = table._keyTypes,
-        meta = table._meta
+        keyTypes = jyFrame._keyTypes,
+        meta = jyFrame._meta
     )
-#/def likeTable
+#/def likeJyFrame
 
 def fromFile(
     fp: str,
     decoder: json.JSONDecoder | None = None,
     strict: bool = False,
     update: bool = False
-    ) -> JFrame:
+    ) -> JyFrame:
     """
-        Reads directly as a table on the disk in json form
+        Reads directly as a jyFrame on the disk in json form
     """
     with open( fp, 'r' ) as _file:
-        data: JFrameDict = json.load( fp = _file, cls = decoder )
+        data: JyFrameDict = json.load( fp = _file, cls = decoder )
     #
     
-    data_all: JFrameDict
+    data_all: JyFrameDict
     
     # Check is has all required fields when `strict` mode
     _REQUIRED_KEYS = ["_fixed","_shift","_shiftIndex","_keyTypes'", "_meta"]
@@ -972,7 +977,7 @@ def fromFile(
         } | data
     #/if strict/else
     
-    jFrame: JFrame = fromDict( data_all )
+    jFrame: JyFrame = fromDict( data_all )
     
     # Write file if it's missing a section and
     if update and any( key not in data for key in _REQUIRED_KEYS ):
@@ -983,18 +988,18 @@ def fromFile(
 #/def fromFile
 
 # Synonoym: fromFile
-def from_file( fp: str, decoder: json.JSONDecoder | None = None ) -> JFrame:
+def from_file( fp: str, decoder: json.JSONDecoder | None = None ) -> JyFrame:
     """
         Directly reads from a regular json on the disc. Synonym to `fromFile()`
     """
     return fromFile( fp = fp, decoder = decoder )
 #/def fromFile
 
-def fromFile_shift( fp: str, decoder: json.JSONDecoder | None = None ) -> JFrame:
+def fromFile_shift( fp: str, decoder: json.JSONDecoder | None = None ) -> JyFrame:
     """
-        Reads the table as the shift data only, with no fixed and no meta
+        Reads the jyFrame as the shift data only, with no fixed and no meta
         
-        This is a niche use, for when a table has been stored as a dictionary of lists at the top level
+        This is a niche use, for when a jyFrame has been stored as a dictionary of lists at the top level
     """
     with open( fp, 'r' ) as _file:
         data: dict = json.load( fp = _file, cls = decoder )
@@ -1004,54 +1009,54 @@ def fromFile_shift( fp: str, decoder: json.JSONDecoder | None = None ) -> JFrame
 #/def fromFile_shift
 
 ## -- Transformations, filters
-##    All return new tables, dicts, items, etc
+##    All return new jyFrames, dicts, items, etc
 
 def _does_matchRow(
-    jFilter: JFilter,
+    jyFilter: JyFilter,
     row: dict[ str, any ]
     ) -> bool:
     """
-        Checks jFilter against a row, whether a lambda or a dict
+        Checks jyFilter against a row, whether a lambda or a dict
     """
-    if isinstance( jFilter, dict ):
+    if isinstance( jyFilter, dict ):
         return all(
-            row[ key ] == val for key, val in jFilter.items()
+            row[ key ] == val for key, val in jyFilter.items()
         )
     #
-    if isinstance( jFilter, Callable ):
-        return jFilter( row )
+    if isinstance( jyFilter, Callable ):
+        return jyFilter( row )
     #
-    raise Exception("Bad jFilter={}".format( jFilter ))
+    raise Exception("Bad jyFilter={}".format( jyFilter ))
 #/ def _does_matchRow
 
 def filter(
-    table: JFrame,
-    jFilter: JFilter
-    ) -> JFrame:
+    jyFrame: JyFrame,
+    jyFilter: JyFilter
+    ) -> JyFrame:
     """
-        Gets a new table with the same header, adding in rows where `jFilter` is true
+        Gets a new jyFrame with the same header, adding in rows where `jyFilter` is true
     """
     
-    new_table: JFrame = likeTable( table )
-    if len( table ) == 0:
-        return new_table
+    new_jyFrame: JyFrame = likeJyFrame( jyFrame )
+    if len( jyFrame ) == 0:
+        return new_jyFrame
     #
     
-    for row in table:
+    for row in jyFrame:
         if _does_matchRow(
-            jFilter,
+            jyFilter,
             row
         ):
-            new_table.append( row )
+            new_jyFrame.append( row )
         #/if _does_matchRow( ... )
-    #/for row in table
+    #/for row in jyFrame
     
-    return new_table
+    return new_jyFrame
 #/def filter
 
 def filter_returnFirst(
-    table: JFrame,
-    jFilter: JFilter,
+    jyFrame: JyFrame,
+    jyFilter: JyFilter,
     allow_zero: bool = False
     ) -> dict[ str, any ]:
     """
@@ -1059,80 +1064,84 @@ def filter_returnFirst(
         
         Used like `filter_expectOne()` except you're very confident there's only one or you need the first. Also useful for finding the first row after a specified time
     """
-    new_table: JFrame = likeTable( table )
-    if len( table ) == 0:
-        return new_table
+    new_jyFrame: JyFrame = likeJyFrame( jyFrame )
+    if len( jyFrame ) == 0:
+        return new_jyFrame
     #
     
     
-    for row in table:
+    for row in jyFrame:
         if _does_matchRow(
-            jFilter,
+            jyFilter,
             row
         ):
-            new_table.append( row )
+            new_jyFrame.append( row )
             break
         #/if _does_matchRow( ... )
-    #/for row in table
+    #/for row in jyFrame
     
-    if len( new_table ) >= 1 or allow_zero:
-        return new_table
+    if len( new_jyFrame ) >= 1 or allow_zero:
+        return new_jyFrame
     #
     else:
-        raise Exception("No matching rows for jFilter={}".format( jFilter ))
-    #/if len( new_table ) >= 1 or allow_zero/else
+        raise Exception("No matching rows for jyFilter={}".format( jyFilter ))
+    #/if len( new_jyFrame ) >= 1 or allow_zero/else
     
     raise Exception("Unexpected EOF")
 #/def filter_returnFirst
 
 def filter_expectOne(
-    table: JFrame,
-    jFilter: JFilter,
+    jyFrame: JyFrame,
+    jyFilter: JyFilter,
     allow_zero: bool = False
     ) -> dict[ str, any ]:
     """
-        Runs jFilter but raises if you have more than one result. `allow_zero` will return `{}` if true, otherwise will also raise with zero results
+        Runs jyFilter but raises if you have more than one result. `allow_zero` will return `{}` if true, otherwise will also raise with zero results
         
         Essentially used when you expect a unique, and present row, sort of like a primary key
         
         Returns a row as a dict
     """
     
-    new_table: JFrame = filter( table, jFilter )
+    new_jyFrame: JyFrame = filter( jyFrame, jyFilter )
     
-    if len( new_table ) == 0:
+    if len( new_jyFrame ) == 0:
         if allow_zero:
             return {}
         else:
             raise Exception("Zero results")
         #
     #
-    if len( new_table ) == 1:
-        return new_table[0]
+    if len( new_jyFrame ) == 1:
+        return new_jyFrame[0]
     #
     
-    if len( new_table ) > 1:
-        raise Exception("Too many results ({})".format( len_new_table ) )
+    if len( new_jyFrame ) > 1:
+        raise Exception(
+            "Too many results;  len( new_jyFrame )={}".format(
+                len( new_jyFrame )
+            )
+        )
     #
-    raise Exception("# Bad new_table={}".format(new_table))
+    raise Exception("# Bad new_jyFrame={}".format(new_jyFrame))
 #/def filter_expectOne
 
 # -- Sorting
 
 def sortedBy(
-    table: JFrame,
+    jyFrame: JyFrame,
     by: list[ str ]
-    ) -> JFrame:
+    ) -> JyFrame:
     """
-        Returns a new table, sorting by the values in the `by` list of columns
+        Returns a new jyFrame, sorting by the values in the `by` list of columns
         Does not change the order of columns at all
     """
     
     
-    # Get table as list of sorted dicts
-    # Return into a new table
+    # Get jyFrame as list of sorted dicts
+    # Return into a new jyFrame
     list_sorted = [
-        row for row in table
+        row for row in jyFrame
     ]
     
     list_sorted.sort(
@@ -1141,12 +1150,12 @@ def sortedBy(
         )
     )
   
-    newTable: JFrame = likeTable( table )
+    new_jyFrame: JyFrame = likeJyFrame( jyFrame )
     for row in list_sorted:
-        newTable.append( row )
+        new_jyFrame.append( row )
     #
     
-    return newTable
+    return new_jyFrame
 #/def sortedBy
 
 ## -- Second Order stats (Method of moments online estimator)
@@ -1156,16 +1165,16 @@ def fromSecondOrderStats(
     groups: list[ str ],
     standard_error: bool = True,
     digits: int = 3
-    ) -> JFrame:
+    ) -> JyFrame:
     if len( stats ) == 0:
-        return JFrame()
+        return JyFrame()
     #
     
     numerics: list[ str ] = next(
         list( val.keys() ) for val in stats.values()
     )
     
-    table: JFrame = fromHeaders(
+    jyFrame: JyFrame = fromHeaders(
         shiftHeader = numerics,
         shiftIndexHeader = groups
     )
@@ -1189,14 +1198,14 @@ def fromSecondOrderStats(
                 digits = digits
             )
         #
-        table.append( row )
+        jyFrame.append( row )
     #/for key, val in stats.items()
     
-    return table
+    return jyFrame
 #/def fromSecondOrderStats
 
 def secondOrderStats(
-    table: JFrame,
+    jyFrame: JyFrame,
     groups: list[ str ],
     numerics: list[ str ]
     ) -> dict[ tuple[any,...], list[float ]]:
@@ -1212,7 +1221,7 @@ def secondOrderStats(
             list[float]
         ]
     ] = {}
-    for row in table:
+    for row in jyFrame:
         row_key = tuple(
             row[ col ] for col in groups
         )
@@ -1234,7 +1243,7 @@ def secondOrderStats(
                 ]
             #/for col in numerics
         #/if row_key in summary/else
-    #/for row in table
+    #/for row in jyFrame
     
     return summary
 #/def secondOrderStats
