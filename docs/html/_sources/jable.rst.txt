@@ -5,30 +5,5 @@ The `JyFrame` is a simple, unassuming representation of the Json Table (jable) h
     
 Otherwise, it does not offer many powers other tabular data do not.
 
-.. autofunction:: jable.JyFrame
-
-.. autofunction:: jable.JyFrame.keys
-
-.. autofunction:: jable.JyFrame.keys_fixed
-
-.. autofunction:: jable.JyFrame.get_fixed
-
-.. autofunction:: jable.JyFrame.get_fixed_withDefaultDict
-
-.. autofunction:: jable.JyFrame.as_dict
-
-.. autofunction:: jable.JyFrame.does_matchIndex
-
-.. autofunction:: jable.JyFrame.any_matchingIndices
-
-.. autofunction:: jable.JyFrame.get_matchingIndices
-
-.. autofunction:: jable.JyFrame.set_where
-
-.. autofunction:: jable.JyFrame.append
-
-.. autofunction:: jable.JyFrame.remove
-
-.. autofunction:: jable.JyFrame.remove_where
-
-.. autofunction:: jable.JyFrame.write_file
+.. autoclass:: jable.JyFrame
+    :members: keys, keys_fixed, get_fixed, get_fixed_withDefaultDict, as_dict, does_matchIndex, any_matchingIndices, get_matchingIndices, set_where, append, remove, remove_where, write_file
