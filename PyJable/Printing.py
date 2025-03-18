@@ -1,7 +1,7 @@
 """
     Utilities to read and print json tables
     
-    Inject JsonTable as needed; we use the Protocol `Table`
+    Inject jable.JFrame as needed; we use the Protocol `Table`
 """
 
 from typing import Protocol, Self

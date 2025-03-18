@@ -4,6 +4,8 @@
     
     This permits more complex objects, by allowing any type as an object, and storing anything which can be serialized as an item in a json list
     
+    For maximal reliability, imports only the standard library
+    
 """
 
 import json
@@ -13,6 +15,25 @@ from typing import Callable, Literal, Self
 from sys import path
 
 JFilter: type = dict[ str, any ] | Callable[ dict[ str, any ], bool ]
+JFrameDict: type = dict[{
+    "_fixed": dict[ str, any ],
+    "_shift": dict[ str, list ],
+    "_shiftIndex": dict[ str, list ],
+    "_keyTypes": dict[ str, str | type ],
+    "_meta": dict[ str, any ]
+}]
+
+# Saves the string representation of the most common datatypes
+# Does no enforcement or conversion; it can be set freely and can be any string
+# or type. It's for the user's convenience
+_BASE_TYPES: list[ type ] = [
+    str, int, float,
+    list, dict
+]
+
+_TYPES_DICT: dict[ str, type ] = {
+    str( _type ): _type for _type in _BASE_TYPES
+}
 
 def row_does_matchJFilter(
     row: dict[ str, any ],
@@ -38,28 +59,61 @@ def row_does_matchJFilter(
     raise Exception("Unrecognized jFilter={}".format(jFilter))
 #/def row_does_matchJFilter
 
-class JsonTable():
+class JFrame():
     """
         Stores column data as a combination of three parts:
         
         :param dict[ str, any ] fixed: Columns with the same name for value in every row. You can change its value but that will essentially change it for every row; try to only change it in code that knows it's a fixed key, and sets and gets it with the fixed methods (`.keys_fixed()`, `.get_fixed(...)`)
         :param dict[ str, list ] shift: Where we have a listed literal item as a value, typically a string, float or int, sometimes lists of them, sometimes dictionaries or any other objects
         :param dict[ str list ] shiftIndex: Sometimes, shift columns will have the same value repeated many times. If its column name is in shift index, then the values in shift are integers, referring to the index in shiftIndex of the same column. I.e., if we have `shift["fur_color"] = [1,0,2]` and `shiftIndex["fur_color"] = ["green","orange","purple","red"]`, then the `"fur_color"`s are really `["orange","green","purple"]`
-        :param dict meta: Another arbitrary dictionary to hold domain specific data, in the table as `._meta`. No methods write or use this, so edit and read at will or subclass.
+        :param dict[ str, str | type ] keyTypes: Optional types to set for any columns. No enforcement is done by the JFrame itself, whether inserting or retriving. It is for your own use. These will be serialized as strings using `str` so add the appropriate functions for custom classes to serialize it as you want, and convert into a class upon reading. Includes support for basic python types
+        :param dict[ str, any ] meta: Another arbitrary dictionary to hold domain specific data, in the table as `._meta`. No methods write or use this, so edit and read at will or subclass.
+        :param dict[ str, type ] customTypesDict: A reference
         
-        For `table: JsonTable` You can get a column `my_column: str` of data by taking `table[my_column]`. You can get a row `j: int` as a dictionary with `table[j]`. You can get one item with `table[j,my_column]`; see `.__getitem__(...)`
+        For `table: JFrame` You can get a column `my_column: str` of data by taking `table[my_column]`. You can get a row `j: int` as a dictionary with `table[j]`. You can get one item with `table[j,my_column]`; see `.__getitem__(...)`
     """
     def __init__(
         self: Self,
         fixed: dict[ str, any ] = {},
         shift: dict[ str, list] = {},
         shiftIndex: dict[ str, list ] = {},
-        meta: any = {}
+        keyTypes: dict[ str, type ] = {},
+        meta: dict[ str, any ] = {},
+        customTypes: dict[ str, type ] = {}
         ):
+        
+        
         self._fixed = fixed
         self._shift = shift
         self._shiftIndex = shiftIndex
         self._meta = meta
+        self._customTypes = customTypes
+        
+        # Handle key types by using ._customTypes and _TYPES_DICT
+        self._keyTypes = {}
+        for col, _type in keyTypes:
+            if isinstance( _type, str ):
+                # Check custom types first
+                if _type in self._customTypes:
+                    self._keyTypes[ col ] = self._customTypes[ _type ]
+                #
+                # Not custom, check builtins
+                elif _type in _TYPES_DICT:
+                    self._keyTypes[ col ] = _TYPES_DICT[ _type ]
+                #
+                # Cannot find, leave as string
+                else:
+                    self._keyTypes[ col ] = _type
+                #/if _type in self._customTypes
+            #/if isinstance( _type, str )
+            elif isinstance( _type, type ):
+                # It's a type
+                self._keyTypes[ col ] = _type
+            #
+            else:
+                raise Exception("Unrecognized col, _type={},{}".format(col,_type))
+            #/switch type( _type )
+        #/for col, _type in keyTypes
         
         assert all( key in self._shift for key in self._shiftIndex )
         
@@ -77,7 +131,7 @@ class JsonTable():
         else:
             self._len = 0
         #/if self._shift != {}/elif self._fixed != {}/else
-        
+
         self.shape = (self._len, len( self._fixed ) + len( self._shift ))
     #/def __init__
     
@@ -110,11 +164,11 @@ class JsonTable():
     
     # -- Getting and Iterating
     
-    def __iter__( self: Self ) -> "JsonTableIterator":
+    def __iter__( self: Self ) -> "JFrameIterator":
         """
             Goes through by row giving each row as a dictionary
         """
-        return JsonTableIterator( self )
+        return JFrameIterator( self )
     #
     
     def _item_by_rowCol(
@@ -145,7 +199,7 @@ class JsonTable():
             table[ col:str ] | table[ rows: Iterable | Slice, col:str ]
                 -> List of items
             table[ rows: Iterable[int] | Slice, cols: Iterable[ str ] )
-                -> JsonTable
+                -> JFrame
         """
         if isinstance( index, tuple ):
             assert len( index ) == 2
@@ -182,7 +236,7 @@ class JsonTable():
                         #/if item[ col ] is not None and col in self._shiftIndex
                     #/for col in item
                 elif len( row ) > 1:
-                    return JsonTable(
+                    return JFrame(
                         fixed = {
                             col: val for col, val in self._fixed.items() if col in column
                         },
@@ -279,14 +333,20 @@ class JsonTable():
         """
     #/def get_fixed_withDefaultDict
     
-    def as_dict( self: Self ) -> dict:
+    def as_dict( self: Self ) -> JFrameDict:
         """
-            The dictionary, ready to be saved to the disk as json (if the types are serializable)
+            The dictionary, ready to be saved to the disk as json
+            
+            Saves types as their stringified version (if the types are serializable)
         """
+        _keyTypes: dict[ str, str ] = {
+            col: str( _type ) for col, _type in self._keyTypes.items()
+        }
         return {
             "_fixed": self._fixed,
             "_shift": self._shift,
             "_shiftIndex": self._shiftIndex,
+            "_keyTypes": _keyTypes,
             "_meta": self._meta
         }
     #/def as_dict
@@ -615,6 +675,12 @@ class JsonTable():
                     self._shift[ key ].append( None )
                 #/if key in row/else
             #/for key in self._shift.keys()
+            # Update fixed if present
+            for key in self._fixed:
+                if key in row:
+                    self._fixed[ key ] = row[ key ]
+                #
+            #/for key in self._fixed
         #/if strict/else
         self._len += 1
         self.shape = ( self._len, self.shape[1])
@@ -694,32 +760,29 @@ class JsonTable():
     
     def write_file(
         self: Self,
-        file: str,
+        fp: str,
         mode: str = 'w',
         encoder: json.JSONEncoder | None = None
         ) -> None:
         """
             Standard method to write to a file as a json, which can be initialized into a table via `fromDict(...)` after reading
         """
-        with open( file, mode ) as _file:
+        with open( fp, mode ) as _file:
             json.dump(
                 obj = self.as_dict(),
                 fp = _file,
                 cls = encoder
             )
-        #/with open( file, mode ) as _file
+        #/with open( fp, mode ) as _file
         
         return
     #/def write_file
-    """
-        Writes to a json on the disk
-    """
-#/class JsonTable
+#/class JFrame
 
-class JsonTableIterator():
+class JFrameIterator():
     def __init__(
         self: Self,
-        table: JsonTable
+        table: JFrame
     ):
         self._index = 0
         self._table = table
@@ -740,25 +803,21 @@ class JsonTableIterator():
             }
         #/if self._index > len( self._table ) - 1/else
     #/def __next__
-#/class JsonTableIterator
+#/class JFrameIterator
 
 # -- Initializers
 
 def fromDict(
-    data: dict[{
-        "_fixed": dict[ str, any],
-        "_shift": dict[ str, list],
-        "_shiftIndex": dict[ str, list ],
-        "_meta": dict
-    }]
-    ) -> JsonTable:
+    jFrame: JFrameDict
+    ) -> JFrame:
     """
-        Converts the raw json to JsonTable, without adding any structure
+        Converts the raw json to JFrame, without adding any structure
     """
-    return JsonTable(
+    return JFrame(
         fixed = data["_fixed"],
         shift = data["_shift"],
         shiftIndex = data["_shiftIndex"],
+        keyTypes = data["_keyTypes"],
         meta = data["_meta"]
     )
 #/def fromDict
@@ -767,11 +826,13 @@ def fromShiftIndexHeader(
     fixed: dict[ str, any ] | list[ str ] = {},
     shift: dict[ str, list ] = {},
     shiftIndexHeader: list[ str ] = [],
+    keyTypes: dict[ str, type ] = {},
     meta: any = {}
-    ) -> JsonTable:
+    ) -> JFrame:
     from copy import deepcopy
     shiftIndex = {}
     
+    # Figure out the true header by taking the union
     shiftHeader: list[ str ] = list(
         set(
             shiftIndexHeader + list( shift.keys() )
@@ -785,7 +846,7 @@ def fromShiftIndexHeader(
         }
     #
     
-    table: JsonTable = JsonTable(
+    table: JFrame = JFrame(
         fixed = fixed,
         shiftIndex = {
             _key: [] for _key in shiftIndexHeader
@@ -793,6 +854,7 @@ def fromShiftIndexHeader(
         shift = {
             _key: [] for _key in shiftHeader
         },
+        keyTypes = keyTypes,
         meta = meta
     )
     
@@ -822,8 +884,9 @@ def fromHeaders(
     fixed: dict[ str, any ] | list[ str ] = {},
     shiftHeader: list[ str ] = [],
     shiftIndexHeader: list[ str ] = [],
+    keyTypes: dict[ str, type ] = {},
     meta: any = {}
-    ) -> JsonTable:
+    ) -> JFrame:
     """
         Initializes a table with the given headers, but no data (with the possible exception of `fixed`)
     """
@@ -838,21 +901,22 @@ def fromHeaders(
         col for col in shiftHeader if col not in shiftIndexHeader
     ]
     
-    return JsonTable(
+    return JFrame(
         fixed = fixed,
         shift = { col: [] for col in shiftHeaderAll },
         shiftIndex = { col: [] for col in shiftIndexHeader },
+        keyTypes = keyTypes,
         meta = meta
     )
 #/def fromHeaders
 
-def fromDict_shift( data: dict[ str, list ] ) -> JsonTable:
-    return JsonTable( shift = data )
+def fromDict_shift( data: dict[ str, list ] ) -> JFrame:
+    return JFrame( shift = data )
 #/def fromDict_shift
 
 def likeTable(
-    table: JsonTable
-    ) -> JsonTable:
+    table: JFrame
+    ) -> JFrame:
     """
         Gives a blank table with copied headers
     """
@@ -864,47 +928,72 @@ def likeTable(
         shiftIndexHeader = [
             key for key in table._shiftIndex.keys()
         ],
+        keyTypes = table._keyTypes,
         meta = table._meta
     )
 #/def likeTable
 
-def fromFile( file: str, decoder: json.JSONDecoder | None = None ) -> JsonTable:
+def fromFile(
+    fp: str,
+    decoder: json.JSONDecoder | None = None,
+    strict: bool = False,
+    update: bool = False
+    ) -> JFrame:
     """
         Reads directly as a table on the disk in json form
     """
-    with open( file, 'r' ) as _file:
-        data: dict = json.load( fp = _file, cls = decoder )
+    with open( fp, 'r' ) as _file:
+        data: JFrameDict = json.load( fp = _file, cls = decoder )
     #
     
-    if not any( key in data for key in ["_fixed","_shift","_shiftIndex","_meta"] ):
-        raise Exception("Unrecognized file format")
-    #
+    data_all: JFrameDict
     
-    return fromDict(
-        {
-            "_fixed": {},
-            "_shift": {},
-            "_shiftIndex": {},
-            "_meta": {}
+    # Check is has all required fields when `strict` mode
+    _REQUIRED_KEYS = ["_fixed","_shift","_shiftIndex","_keyTypes'", "_meta"]
+    if strict:
+        if any( key not in data for key in _REQUIRED_KEYS ):
+            raise Exception(
+                "Unrecognized file keys={}".format(
+                    data.keys()
+                )
+            )
+        #/if any( key not in data for key in _REQUIRED_KEYS )
+
+        data_all = {
+            key: {} for key in _REQUIRED_KEYS
         } | data
-    )
+    #
+    else:
+        data_all = {
+            key: {} for key in _REQUIRED_KEYS
+        } | data
+    #/if strict/else
+    
+    jFrame: JFrame = fromDict( data_all )
+    
+    # Write file if it's missing a section and
+    if update and any( key not in data for key in _REQUIRED_KEYS ):
+        jFrame.write_file( file = file )
+    #
+    
+    return jFrame
 #/def fromFile
 
 # Synonoym: fromFile
-def from_file( file: str, decoder: json.JSONDecoder | None = None ) -> JsonTable:
+def from_file( fp: str, decoder: json.JSONDecoder | None = None ) -> JFrame:
     """
         Directly reads from a regular json on the disc. Synonym to `fromFile()`
     """
-    return fromFile( file = file, decoder = decoder )
+    return fromFile( fp = fp, decoder = decoder )
 #/def fromFile
 
-def fromFile_shift( file: str, decoder: json.JSONDecoder | None = None ) -> JsonTable:
+def fromFile_shift( fp: str, decoder: json.JSONDecoder | None = None ) -> JFrame:
     """
         Reads the table as the shift data only, with no fixed and no meta
         
         This is a niche use, for when a table has been stored as a dictionary of lists at the top level
     """
-    with open( file, 'r' ) as _file:
+    with open( fp, 'r' ) as _file:
         data: dict = json.load( fp = _file, cls = decoder )
     #
     
@@ -933,14 +1022,14 @@ def _does_matchRow(
 #/ def _does_matchRow
 
 def filter(
-    table: JsonTable,
+    table: JFrame,
     jFilter: JFilter
-    ) -> JsonTable:
+    ) -> JFrame:
     """
         Gets a new table with the same header, adding in rows where `jFilter` is true
     """
     
-    new_table: JsonTable = likeTable( table )
+    new_table: JFrame = likeTable( table )
     if len( table ) == 0:
         return new_table
     #
@@ -958,7 +1047,7 @@ def filter(
 #/def filter
 
 def filter_returnFirst(
-    table: JsonTable,
+    table: JFrame,
     jFilter: JFilter,
     allow_zero: bool = False
     ) -> dict[ str, any ]:
@@ -967,7 +1056,7 @@ def filter_returnFirst(
         
         Used like `filter_expectOne()` except you're very confident there's only one or you need the first. Also useful for finding the first row after a specified time
     """
-    new_table: JsonTable = likeTable( table )
+    new_table: JFrame = likeTable( table )
     if len( table ) == 0:
         return new_table
     #
@@ -994,7 +1083,7 @@ def filter_returnFirst(
 #/def filter_returnFirst
 
 def filter_expectOne(
-    table: JsonTable,
+    table: JFrame,
     jFilter: JFilter,
     allow_zero: bool = False
     ) -> dict[ str, any ]:
@@ -1006,7 +1095,7 @@ def filter_expectOne(
         Returns a row as a dict
     """
     
-    new_table: JsonTable = filter( table, jFilter )
+    new_table: JFrame = filter( table, jFilter )
     
     if len( new_table ) == 0:
         if allow_zero:
@@ -1028,9 +1117,9 @@ def filter_expectOne(
 # -- Sorting
 
 def sortedBy(
-    table: JsonTable,
+    table: JFrame,
     by: list[ str ]
-    ) -> JsonTable:
+    ) -> JFrame:
     """
         Returns a new table, sorting by the values in the `by` list of columns
         Does not change the order of columns at all
@@ -1049,7 +1138,7 @@ def sortedBy(
         )
     )
   
-    newTable: JsonTable = likeTable( table )
+    newTable: JFrame = likeTable( table )
     for row in list_sorted:
         newTable.append( row )
     #
@@ -1064,16 +1153,16 @@ def fromSecondOrderStats(
     groups: list[ str ],
     standard_error: bool = True,
     digits: int = 3
-    ) -> JsonTable:
+    ) -> JFrame:
     if len( stats ) == 0:
-        return JsonTable()
+        return JFrame()
     #
     
     numerics: list[ str ] = next(
         list( val.keys() ) for val in stats.values()
     )
     
-    table: JsonTable = fromHeaders(
+    table: JFrame = fromHeaders(
         shiftHeader = numerics,
         shiftIndexHeader = groups
     )
@@ -1104,7 +1193,7 @@ def fromSecondOrderStats(
 #/def fromSecondOrderStats
 
 def secondOrderStats(
-    table: JsonTable,
+    table: JFrame,
     groups: list[ str ],
     numerics: list[ str ]
     ) -> dict[ tuple[any,...], list[float ]]:
