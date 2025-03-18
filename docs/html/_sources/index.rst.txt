@@ -3,14 +3,22 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to Jable's documentation!
+Welcome to Jable
 =================================
+
+Jable is a simple too for serializing simple tabular data for casual use on the disk, as an improvement to the .csv format. The JFrame is an unassuming representation of the Json Table (jable). has rows as numbers, columns as strings. There are two reasons to use it over .csv:
+
+    1. It can encode anything serializable to Json as an item in a cell, with support for custom encoders and decoders
+    2. It can save space by not repeating the same values over and over
+    3. It ca
+    
+Otherwise, it does not offer many powers other tabular data do not.
 
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
    
-   JsonTable
+   jable
 
 
 

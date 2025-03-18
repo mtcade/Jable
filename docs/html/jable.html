@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="./">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+    <title>&lt;no title&gt; &#8212; Jable - Json Tables</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=362ab14a" />
+    <link rel="stylesheet" type="text/css" href="_static/nature.css?v=0f882399" />
+    <script src="_static/documentation_options.js?v=d45e8c67"></script>
+    <script src="_static/doctools.js?v=9a2dae69"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="Welcome to Jable" href="index.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="index.html" title="Welcome to Jable"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Jable - Json Tables</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">&lt;no title&gt;</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <p>Test of <code class="docutils literal notranslate"><span class="pre">PyJable.jable.JFrame()</span></code>:</p>
+<p>The JFrame is a simple, unassuming representation of the Json Table (jable) has rows as numbers, columns as strings. There are two reasons to use it over .csv:</p>
+<blockquote>
+<div><ol class="arabic simple">
+<li><p>It can encode anything serializable to Json as an item in a cell, with support for custom encoders and decoders</p></li>
+<li><p>It can save space by not repeating the same values over and over</p></li>
+</ol>
+</div></blockquote>
+<p>Otherwise, it does not offer many powers other tabular data do not.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="PyJable.jable.JFrame">
+<span class="sig-prename descclassname"><span class="pre">PyJable.jable.</span></span><span class="sig-name descname"><span class="pre">JFrame</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fixed</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">any</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">shift</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">shiftIndex</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">keyTypes</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">type</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">meta</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">any</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">customTypes</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">type</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">{}</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#PyJable.jable.JFrame" title="Link to this definition">¶</a></dt>
+<dd><p>Stores column data as a combination of three parts:</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>fixed</strong> (<em>dict</em><em>[ </em><em>str</em><em>, </em><em>any</em><em> ]</em>) – Columns with the same name for value in every row. You can change its value but that will essentially change it for every row; try to only change it in code that knows it’s a fixed key, and sets and gets it with the fixed methods (<cite>.keys_fixed()</cite>, <cite>.get_fixed(…)</cite>)</p></li>
+<li><p><strong>shift</strong> (<em>dict</em><em>[ </em><em>str</em><em>, </em><em>list</em><em> ]</em>) – Where we have a listed literal item as a value, typically a string, float or int, sometimes lists of them, sometimes dictionaries or any other objects</p></li>
+<li><p><strong>shiftIndex</strong> (<em>dict</em><em>[ </em><em>str list</em><em> ]</em>) – Sometimes, shift columns will have the same value repeated many times. If its column name is in shift index, then the values in shift are integers, referring to the index in shiftIndex of the same column. I.e., if we have <cite>shift[“fur_color”] = [1,0,2]</cite> and <cite>shiftIndex[“fur_color”] = [“green”,”orange”,”purple”,”red”]</cite>, then the <cite>“fur_color”`s are really `[“orange”,”green”,”purple”]</cite></p></li>
+<li><p><strong>keyTypes</strong> (<em>dict</em><em>[ </em><em>str</em><em>, </em><em>str</em><em> | </em><em>type</em><em> ]</em>) – Optional types to set for any columns. No enforcement is done by the JFrame itself, whether inserting or retriving. It is for your own use. These will be serialized as strings using <cite>str</cite> so add the appropriate functions for custom classes to serialize it as you want, and convert into a class upon reading. Includes support for basic python types</p></li>
+<li><p><strong>meta</strong> (<em>dict</em><em>[ </em><em>str</em><em>, </em><em>any</em><em> ]</em>) – Another arbitrary dictionary to hold domain specific data, in the table as <cite>._meta</cite>. No methods write or use this, so edit and read at will or subclass.</p></li>
+<li><p><strong>customTypesDict</strong> (<em>dict</em><em>[ </em><em>str</em><em>, </em><em>type</em><em> ]</em>) – A reference</p></li>
+</ul>
+</dd>
+</dl>
+<p>For <cite>table: JFrame</cite> You can get a column <cite>my_column: str</cite> of data by taking <cite>table[my_column]</cite>. You can get a row <cite>j: int</cite> as a dictionary with <cite>table[j]</cite>. You can get one item with <cite>table[j,my_column]</cite>; see <cite>.__getitem__(…)</cite></p>
+</dd></dl>
+
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="index.html"
+                          title="previous chapter">Welcome to Jable</a></p>
+  </div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/jable.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<search id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="index.html" title="Welcome to Jable"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Jable - Json Tables</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">&lt;no title&gt;</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+    &#169; Copyright 2025, Evan Mason.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 7.3.7.
+    </div>
+  </body>
+</html>

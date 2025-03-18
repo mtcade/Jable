@@ -1,0 +1,10 @@
+Test of ``PyJable.jable.JFrame()``:
+
+The JFrame is a simple, unassuming representation of the Json Table (jable) has rows as numbers, columns as strings. There are two reasons to use it over .csv:
+
+    1. It can encode anything serializable to Json as an item in a cell, with support for custom encoders and decoders
+    2. It can save space by not repeating the same values over and over
+    
+Otherwise, it does not offer many powers other tabular data do not.
+
+.. autofunction:: PyJable.jable.JFrame
