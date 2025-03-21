@@ -1,11 +1,10 @@
 #
 """
-    A number row, named column alternative to csv, instead storing the object as json
+    A number row, named column alternative to .csv, instead storing the object as json
     
     This permits more complex objects, by allowing any type as an object, and storing anything which can be serialized as an item in a json list
     
     For maximal reliability, imports only the standard library
-    
 """
 
 import json
@@ -85,7 +84,6 @@ class JyFrame():
         customTypes: dict[ str, type ] = {}
         ):
         
-        
         self._fixed = fixed
         self._shift = shift
         self._shiftIndex = shiftIndex
@@ -140,6 +138,16 @@ class JyFrame():
     
     # -- Info
     
+    def _list_fromSlice(
+        self: Self,
+        rows: slice
+    ) -> list[ int ]:
+        """
+            Turns common slice notation into an appropriate list of ints
+        """
+        return [i for i in range( *rows.indices(self._len) ) ]
+    #/def _list_fromSlice
+    
     def __len__( self: Self ) -> int:
         return self._len
     #
@@ -193,6 +201,52 @@ class JyFrame():
         #
     #/def _item_by_rowCol
     
+    def _select_rows_andColumns(
+        self: Self,
+        rows: list[ int ] = [],
+        columns: list[ str ] = []
+        ) -> Self:
+        """
+            :param list[ int ] rows: Which rows to get. Default is all.
+            :param list[ str ] col: Which columns to get. Default is all.
+            
+            Returns a new table copy of the given rows and columns. Used primarily by ``.__getitem__()``
+        """
+        from copy import deepcopy
+        
+        if rows == []:
+            rows = [ i for i in range( len(self) ) ]
+        #
+        
+        if columns == []:
+            columns = self.keys()
+        #
+        
+        # Initialize new table
+        fixed = {
+            key: val for key, val in self._fixed.items() if key in columns
+        }
+        
+        shift = {
+            col: [
+                self._shift[ col ][ i ] for i in rows
+            ] for col in columns if col in self._shift
+        }
+        
+        # Need all shiftIndex values
+        shiftIndex = {
+            col: self._shiftIndex[ col ] for col in columns if col in self._shiftIndex
+        }
+        return JyFrame(
+            fixed = fixed,
+            shift = shift,
+            shiftIndex = shiftIndex,
+            keyTypes = deepcopy( self._keyTypes ),
+            meta = deepcopy( self._meta ),
+            customTypes = deepcopy( self._customTypes )
+        )
+    #/def _select_rows_andColumns
+    
     def __getitem__(
         self: Self,
         index: int | str | tuple[
@@ -225,7 +279,6 @@ class JyFrame():
         """
         # -- Double value, like `jyFrame[ row, col ]`
         if isinstance( index, tuple ) and len( index ) == 2:
-            # TODO: handle slices for first item, sequences for second
             row = index[0]
             column = index[1]
             if isinstance( row, int ):
@@ -234,7 +287,9 @@ class JyFrame():
             elif isinstance( row, slice ):
                 # Row is a slice
                 # Convert row to indices
-                row = [i for i in range( *row.indices(self._len) ) ]
+                row = self._list_fromSlice(
+                    row
+                )
             elif isinstance( row, Sequence ):
                 # List of ints, most likely
                 ...
@@ -243,40 +298,6 @@ class JyFrame():
                 raise Exception("bad row={}".format( row ) )
             #
             
-            if isinstance( column, Sequence ):
-                _self_keys: list[ str ] = self.keys()
-                assert all( col in _self_keys for col in column )
-                if len( row ) == 1:
-                    item = self._fixed | {
-                        col: self._shift[ col ][ row[0] ] for col in column if col in self._shift
-                    }
-                    for col in item:
-                        if item[ col ] is not None and col in self._shiftIndex:
-                            item[ col ] == self._shiftIndex[ col ][
-                                item[ col ]
-                            ]
-                        #/if item[ col ] is not None and col in self._shiftIndex
-                    #/for col in item
-                elif len( row ) > 1:
-                    return JyFrame(
-                        fixed = {
-                            col: val for col, val in self._fixed.items() if col in column
-                        },
-                        shift = {
-                            col: [
-                                self._shift[ col ][ i ] for i in row
-                            ] for col in column if col in self._shift
-                        },
-                        shiftIndex = {
-                            col: self._shiftIndex[ col ] for col in column if col in self._shiftIndex
-                        },
-                        meta = self._meta
-                    )
-                #
-                else:
-                    raise Exception("# Bad row={}".format(row))
-                #/switch len( row )
-            #
             if isinstance( column, str ):
                 if len( row ) == 1:
                     return self._item_by_rowCol( row[0], column )
@@ -299,12 +320,38 @@ class JyFrame():
                     raise Exception("Bad row={}".format(row))
                 #/switch len( row )
             #
+            elif isinstance( column, Sequence ):
+                _self_keys: list[ str ] = self.keys()
+                assert all( col in _self_keys for col in column )
+                if len( row ) == 1:
+                    item = self._fixed | {
+                        col: self._shift[ col ][ row[0] ] for col in column if col in self._shift
+                    }
+                    for col in item:
+                        if item[ col ] is not None and col in self._shiftIndex:
+                            item[ col ] == self._shiftIndex[ col ][
+                                item[ col ]
+                            ]
+                        #/if item[ col ] is not None and col in self._shiftIndex
+                    #/for col in item
+                    return { col: val for col, val in item.items() if col in column }
+                elif len( row ) > 1:
+                    return self._select_rows_andColumns(
+                        rows = row,
+                        columns = column
+                    )
+                #
+                else:
+                    raise Exception("# Bad row={}".format(row))
+                #/switch len( row )
+            #
             else:
                 # TODO: return new jyFrame if column is a sequence
                 raise Exception("Bad column={}".format( column ))
             #/switch { type index }
-        #
-        # -- Single Items
+        #/if isinstance( index, tuple ) and len( index ) == 2
+        # -- "Single" Items
+        #   Can be one or multiple rows OR columns, but not both
         elif isinstance( index, int ):
             item = self._fixed | {
                 key: self._shift[ key ][ index ] for key in self._shift
@@ -332,14 +379,25 @@ class JyFrame():
         #
         elif isinstance( index, Sequence ):
             if all( isinstance( val, str ) for val in index ):
-                raise Exception("UC")
+                # ["col0","col1",...]
+                return self._select_rows_andColumns(
+                    columns = index
+                )
             #
-            if all ( isinstance( int, str ) for val in index ):
-                raise Exception("UC")
+            if all( isinstance( val, int ) for val in index ):
+                # [0,1,2,...]
+                return self._select_rows_andColumns(
+                    rows = index
+                )
             #
         #
         elif isinstance( index, slice ):
-            raise Exception("UC")
+            # Rows
+            return self._select_rows_andColumns(
+                rows = self._list_fromSlice(
+                    index
+                )
+            )
         else:
             raise Exception("Bad index={}".format(index))
         #/switch { type( index ) }
@@ -533,7 +591,7 @@ class JyFrame():
         self: Self,
         col: str,
         newDict: dict[ int, any ]
-    ) -> None:
+        ) -> None:
         for i, newvalue in newDict.items():
             self._set_index_withDict(
                 index = i,
@@ -542,6 +600,86 @@ class JyFrame():
         #/for i, newvalue in newDict.items()
         return
     #/def _set_column_withDict
+    
+    def _setItem_withDuple(
+        self: Self,
+        rows: int | slice | Sequence[ int ],
+        columns: str | Sequence[ str ],
+        newvalue: any
+        ) -> None:
+        """
+            Called from ``__setitem__()`` when we use bracket setting with two items, like `jyFrame[ row, col ] = newvalue`
+        """
+        if isinstance( rows, int ) and isinstance( columns, str ):
+            # Single cell: `jyFrame[0,"col"] = newvalue`
+            self._set_index_withDict( rows, { columns: newvalue } )
+            return
+        #
+        elif isinstance( rows, int ) and isinstance( columns, Sequence ):
+            # One row, multiple columns
+            if isinstance( newvalue, dict ):
+                assert set( newvalue.keys() ) == set( columns )
+                self._set_index_withDict(
+                    rows, newvalue
+                )
+                return
+            #
+            elif isinstance( newvalue, list ):
+                assert len( newvalue ) == len( columns )
+                self._set_index_withDict(
+                    rows,
+                    {
+                        columns[ j ]: newvalue[ j ] for j in range(
+                            len( columns )
+                        )
+                    }
+                )
+                return
+            #
+            else:
+                raise Exception("Bad newvalue={}".format( newvalue))
+            #/switch type( newvalue )
+        #
+        elif isinstance( columns, str ) and isinstance( rows, slice | Sequence ):
+            # One column, multiple rows
+            if isinstance( rows, slice ):
+                rows = self._list_fromSlice(
+                    rows
+                )
+            #
+            for i in range( len(rows) ):
+                self._set_index_withDict(
+                    rows[i], { col: newvalue[ i ] }
+                )
+            #
+            return
+        #
+        elif isinstance( rows, slice | Sequence ) and isinstance( columns, Sequence ):
+            # Multiple rows and columns; setting from JyFrame
+            if isinstance( rows, slice ):
+                rows = self._list_fromSlice(
+                    rows
+                )
+            #
+            
+            assert isinstance( newvalue, JyFrame )
+            assert len( newvalue ) == len( rows )
+            assert set( newvalue.keys() ) == set( columns )
+
+            for i in range( len( newvalue ) ):
+                self._set_index_withDict(
+                    rows[ i ],
+                    newvalue[ i ]
+                )
+            #
+            return
+        #
+        else:
+            raise Exception("Bad rows, columns = {},{}".format(rows, columns))
+        #/switch type( rows, columns )
+        
+        raise Exception("Unexpected EoF")
+    #/def _setItem_withDuple
     
     # TODO: More cases on index, row
     def __setitem__( self: Self, index: int, newvalue: any ) -> None:
@@ -574,9 +712,14 @@ class JyFrame():
             raise Exception("Unrecognized index={}, newvalue={}".format( index, newvalue ))
         #
         elif isinstance( index, tuple ):
-            # row, col
-            assert len( tuple ) == 2
-            self._set_index_withDict( index[0], { index[1]: newvalue } )
+            # row(s), col(s)
+            assert len( index ) == 2
+            return self._setItem_withDuple(
+                rows = index[0],
+                columns = index[1],
+                newvalue = newvalue
+            )
+            
             return
         #
         else:
@@ -1069,6 +1212,19 @@ def from_file(
     return fromFile( fp = fp, decoder = decoder )
 #/def fromFile
 
+def read_file(
+    fp: str,
+    decoder: json.JSONDecoder | None = None
+    ) -> JyFrame:
+    """
+        :param str fp: File path to read
+        :param json.JSONDecoder|None decoder: Optional customer decoder
+        
+        Directly reads from a regular json on the disc. Synonym to `fromFile()`
+    """
+    return fromFile( fp = fp, decoder = decoder )
+#/def read_file
+
 def fromFile_shift(
     fp: str,
     decoder: json.JSONDecoder | None = None
@@ -1085,8 +1241,21 @@ def fromFile_shift(
     return fromDict_shift( data )
 #/def fromFile_shift
 
-## -- Transformations, filters
+def read_csv(
+    fp: str
+    ) -> JyFrame:
+    """
+        :param str fp: File path to read
+        
+        Quick and dirty; reads entire csv with only `shift` data. The result is a bigger file. If you want to make it more efficient, with `fixed` and `shiftIndex` values, then use ``.consolidate()``
+    """
+    
+#/def read_csv
+
+## -- Transformations
 ##    All return new jyFrames, dicts, items, etc
+
+## -- Filters
 
 def _does_matchRow(
     jyFilter: JyFilter,
@@ -1250,6 +1419,141 @@ def sortedBy(
     
     return new_jyFrame
 #/def sortedBy
+
+# -- Other transformations
+def _index(
+    shift: list
+    ) -> dict[{
+        "shift": list[ int ],
+        "shiftIndex": list
+    }]:
+    """
+        Gets the shift index representation of a column. Used by ``consolidate()`` to figure out if a column is worth converting to a `fixed` or `shiftIndex` column
+    """
+    shiftDict: dict[{
+        "shift": list[ int ],
+        "shiftIndex": list
+    }] = {
+        "shift": [],
+        "shiftIndex": []
+    }
+    
+    for val in shift:
+        try:
+            # Existent item
+            i = shiftDict["shiftIndex"].index( val )
+        #
+        except ValueError:
+            # Not yet present
+            i = len( shiftDict["shiftIndex"] )
+            shiftDict["shiftIndex"].append( val )
+        #/try i = shiftDict["shiftIndex"].index( val )/except ValueError
+        
+        shiftDict["shift"].append( i )
+    #/for val in shift
+    return shiftDict
+#/def _get_shiftIndex
+
+def _unindex(
+    shift: list[ int ],
+    shiftIndex: list
+    ) -> list:
+    """
+        Converts a shift indexed column into just a raw list of values, aka a shift column
+    """
+    return [
+        shiftIndex[ key ] for key in shift
+    ]
+#/def _unidex
+
+def consolidate(
+    jyFrame: JyFrame,
+    threshold: float|int = 0.5,
+    make_fixed: bool = True,
+    unindex: bool = True
+    ) -> JyFrame:
+    """
+        :param JyFrame jyFrame: Frame to consolidate and make more efficient
+        :param float|int threshold: If the number of unique values is less than, it will be converted to a shiftIndex. Proportion of `len(jyFrame)` if a float, literal number if int.
+        :param bool make_fixed: Places columns with a single unique value into `fixed`. If not, it goes into the `shiftIndex` instead.
+        :param bool unindex: Whether to convert `shiftIndex` columns to `shift` columns if they surpas threshold in unique count
+        
+        Checks columns, converting to a shiftIndex when there are few enough unique values (less than `threshold`, as a proportion of `len(jyFrame)` rounded down if a float, literal amount if an int). If there's one unique value, it will become `fixed`, unless `make_fixed = False` in which case it will be in the `shiftIndex`
+        
+        `shiftIndex` will stay the same if `unindex = False`. `fixed` values will stay fixed. `meta`, `keyTypes`, and `customTypes` will be deepcopied.
+        
+        
+    """
+    from copy import deepcopy
+    
+    threshold_int: int
+    if isinstance( threshold, float ):
+        from math import ceil
+        threshold_int = ceil( threshold * len( jyFrame ) )
+    #
+    else:
+        threshold_int = threshold
+    #
+    assert threshold_int > 0
+
+    fixed: dict[ str, any ] = {}
+    shift: dict[ str, list ] = {}
+    shiftIndex: dict[ str, list[ int ] ] = {}
+    
+    
+    for col in jyFrame.keys():
+        if col in jyFrame.keys_fixed():
+            fixed[ col ] = jyFrame.get_fixed( col )
+        #
+        elif col in jyFrame._shiftIndex:
+            # Check if there are enough unique values to unindex
+            if unindex and len( jyFrame._shiftIndex[col] ) >= threshold_int:
+                # Many unique values, unindex
+                shift[ col ] = _unindex(
+                    shift = jyFrame._shift[ col ],
+                    shiftIndex = jyFrame._shiftIndex[ col ]
+                )
+            #
+            else:
+                # Not enough unique values, leave as shiftIndex
+                shiftIndex[ col ] = deepcopy( jyFrame._shiftIndex[ col ] )
+                shift[ col ] = deepcopy( jyFrame._shift[ col ] )
+            #
+        #
+        elif col in jyFrame._shift and col not in jyFrame._shiftIndex:
+            # Check unique values
+            _shiftDict: dict[{
+                "shift": list[ int ],
+                "shiftIndex": list
+            }] = _index( jyFrame._shift[ col ] )
+            if make_fixed and len( _shiftDict[ "shiftIndex"] ) == 1:
+                # One value, it can be fixed
+                fixed[ col ] = _shiftDict["shiftIndex"][ 0 ]
+            #
+            elif len( _shiftDict[ "shiftIndex" ] ) < threshold_int:
+                # Few enough values to index
+                shiftIndex[ col ] = _shiftDict["shiftIndex"]
+                shift[ col ] = _shiftDict["shift"]
+            #
+            else:
+                # Too many unique values, do not index
+                shift[ col ] = deepcopy( jyFrame._shift[ col ] )
+            #
+        #
+        else:
+            raise Exception("Bad jyFrame.keys()={}".format( jyFrame.keys() ))
+        #/switch col
+    #/for col in jyFrame.keys()
+    
+    return JyFrame(
+        fixed = fixed,
+        shift = shift,
+        shiftIndex = shiftIndex,
+        keyTypes = deepcopy( jyFrame._keyTypes ),
+        meta = deepcopy( jyFrame._meta ),
+        customTypes = deepcopy( jyFrame._customTypes )
+    )
+#/def consolidate
 
 ## -- Second Order stats (Method of moments online estimator)
 

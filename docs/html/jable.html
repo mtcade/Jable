@@ -36,7 +36,43 @@
             
   <section id="the-jyframe-class">
 <h1>The <cite>JyFrame</cite> Class<a class="headerlink" href="#the-jyframe-class" title="Link to this heading">¶</a></h1>
-<p>The <cite>JyFrame</cite> can be treated like tabular data, indexed by a row integer and column string.</p>
+<p>The <cite>JyFrame</cite> can be treated like tabular data, indexed by a row integer and column string. There are five parts to the JyFrame:</p>
+<blockquote>
+<div><ol class="arabic">
+<li><p><cite>shift</cite>: A regular dictionary mapping string column names to lists of literal values</p></li>
+<li><p><cite>shiftIndex</cite>: A set of values which the user can mostly ignore. If a column from <cite>shift</cite> is present as a key in <cite>shiftIndex</cite> then for <cite>col: str</cite>, the values in the list of <cite>shift[col]</cite> will be integers, referring to the object in the corresponding index of <cite>shiftIndex[col]</cite>. So if <cite>shift[“name”][3] = 1</cite> and <cite>shiftIndex[“name”] = [“Tom”,”Jerry”]</cite>, then the real value of <cite>shift[“name”][3] = shiftIndex[“name”][1] = “Jerry”</cite>.</p></li>
+<li><p><cite>fixed</cite>: A “column” which has the same value in every row. This allows us to list the value only once. Beware updating this, as it will change the value for every row. There are two ways to consider <cite>fixed</cite>:</p>
+<blockquote>
+<div><ol class="arabic simple">
+<li><p>A space saver, where we simply have the same value for every row. In this case, you can ignore that it’s different from any other columns or values</p></li>
+<li><p>A set of variables associated with the entire table. For example, you might have a relative <cite>“path”</cite> column, which is relative to a fixed <cite>“root”</cite>. If you know this is the case, you should treat it specially with your code, and keep track using the <code class="docutils literal notranslate"><span class="pre">JyFrame.fixed_keys()</span></code> method.</p></li>
+</ol>
+</div></blockquote>
+</li>
+<li><p><cite>keyTypes</cite>: dictionary mapping columns to a type as a python type, or a string. The base JyFrame class makes no checks or enforcement of this; it is only to keep track of columns for the user. As a result, the user can provide <cite>customTypes: dict[ str, type ]</cite> argument to <code class="docutils literal notranslate"><span class="pre">JyFrame()</span></code>. Otherwise, strings as classes will be left as strings in the <cite>keyTypes</cite> dictionary. Upon serialization to a dict, such as for saving, it will turn into <cite>{ col: str(_type) for col, _type in keyTypes.values() }</cite>.</p></li>
+<li><p><cite>meta</cite>: An arbitrary dictionary. The base JyFrame code does not write or read this, but it will preserve it when serializing as well as possible. Store whatever information you want here for subclasses or business logic, but try to make it serializable.</p></li>
+</ol>
+</div></blockquote>
+<p>Iterating over a JyFrame gives each row as a dictionary.</p>
+<p>Get one or many items with bracket notation:</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="jable.JyFrame.__getitem__">
+<span class="sig-prename descclassname"><span class="pre">JyFrame.</span></span><span class="sig-name descname"><span class="pre">__getitem__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">index</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">slice</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">slice</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">any</span></span></span><a class="headerlink" href="#jable.JyFrame.__getitem__" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>index</strong> (<em>int</em><em>|</em><em>str</em><em>|</em><em>tuple</em><em>[</em><em>int</em><em> | </em><em>slice</em><em> | </em><em>Sequence</em><em>[ </em><em>int</em><em> ]</em><em>, </em><em>str</em><em> | </em><em>Sequence</em><em>[ </em><em>str</em><em> ] </em><em>]</em><em>|</em><em>slice</em><em>|</em><em>Sequence</em><em>[ </em><em>int</em><em> ]</em><em>|</em><em>Sequence</em><em>[ </em><em>str</em><em> ]</em>) – Table accessor</p>
+</dd>
+</dl>
+<p><cite>jyFrame[ row: int, col: str ] -&gt; any</cite> A single item at a location</p>
+<p><cite>jyFrame[ col: str ] -&gt; list</cite> The entire column of values</p>
+<p><cite>jyFrame[ row: int ] -&gt; dict[ str, any ]</cite> One row as a dictionary with all keys</p>
+<p><cite>jyFrame[ rows: Sequence[ int ] | slice ] -&gt; JyFrame</cite> Subset of rows, all columns</p>
+<p><cite>jyFrame[ columns: Sequence[ str ] ] -&gt; JyFrame</cite> Subset of columns, all rows</p>
+<p><cite>jyFrame[ row: int, columns: Sequence[ str ] ] -&gt; dict[ str, any ]</cite> One row as a dictionary with subset of columns</p>
+<p><cite>jyFrame[ rows: Sequence[ int ] | slice, col: str ] -&gt; list</cite>: One column, subset of rows as a list of those items. (If you want to keep some index, then have that index as another column)</p>
+<p><cite>jyFrame[ rows: Sequence[ int ] | slice, columns: Sequence[ str ] ] -&gt; jyFrame</cite> Subset of both columns and columns</p>
+</dd></dl>
+
 <dl class="py class">
 <dt class="sig sig-object py" id="jable.JyFrame">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">jable.</span></span><span class="sig-name descname"><span class="pre">JyFrame</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fixed</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">any</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">shift</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">shiftIndex</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">keyTypes</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">type</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">meta</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">any</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">customTypes</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">type</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">{}</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#jable.JyFrame" title="Link to this definition">¶</a></dt>
@@ -140,26 +176,6 @@ If not strict, append keys from row which are present in self._shift, and None f
 
 </dd></dl>
 
-<p>Iterating over it gives each row as a dictionary.</p>
-<p>Get one or many items with bracket notation:</p>
-<dl class="py method">
-<dt class="sig sig-object py" id="jable.JyFrame.__getitem__">
-<span class="sig-prename descclassname"><span class="pre">JyFrame.</span></span><span class="sig-name descname"><span class="pre">__getitem__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">index</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">slice</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">slice</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">any</span></span></span><a class="headerlink" href="#jable.JyFrame.__getitem__" title="Link to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>index</strong> (<em>int</em><em>|</em><em>str</em><em>|</em><em>tuple</em><em>[</em><em>int</em><em> | </em><em>slice</em><em> | </em><em>Sequence</em><em>[ </em><em>int</em><em> ]</em><em>, </em><em>str</em><em> | </em><em>Sequence</em><em>[ </em><em>str</em><em> ] </em><em>]</em><em>|</em><em>slice</em><em>|</em><em>Sequence</em><em>[ </em><em>int</em><em> ]</em><em>|</em><em>Sequence</em><em>[ </em><em>str</em><em> ]</em>) – Table accessor</p>
-</dd>
-</dl>
-<p><cite>jyFrame[ row: int, col: str ] -&gt; any</cite> A single item at a location</p>
-<p><cite>jyFrame[ col: str ] -&gt; list</cite> The entire column of values</p>
-<p><cite>jyFrame[ row: int ] -&gt; dict[ str, any ]</cite> One row as a dictionary with all keys</p>
-<p><cite>jyFrame[ rows: Sequence[ int ] | slice ] -&gt; JyFrame</cite> Subset of rows, all columns</p>
-<p><cite>jyFrame[ columns: Sequence[ str ] ] -&gt; JyFrame</cite> Subset of columns, all rows</p>
-<p><cite>jyFrame[ row: int, columns: Sequence[ str ] ] -&gt; dict[ str, any ]</cite> One row as a dictionary with subset of columns</p>
-<p><cite>jyFrame[ rows: Sequence[ int ] | slice, col: str ] -&gt; list</cite>: One column, subset of rows as a list of those items. (If you want to keep some index, then have that index as another column)</p>
-<p><cite>jyFrame[ rows: Sequence[ int ] | slice, columns: Sequence[ str ] ] -&gt; jyFrame</cite> Subset of both columns and columns</p>
-</dd></dl>
-
 <section id="filters-with-jyfilter">
 <h2>Filters with <cite>JyFilter</cite><a class="headerlink" href="#filters-with-jyfilter" title="Link to this heading">¶</a></h2>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">JyFilter</span><span class="p">:</span> <span class="nb">type</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">[</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">any</span> <span class="p">]</span> <span class="o">|</span> <span class="n">Callable</span><span class="p">[</span> <span class="nb">dict</span><span class="p">[</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">any</span> <span class="p">],</span> <span class="nb">bool</span> <span class="p">]</span>
@@ -167,9 +183,9 @@ If not strict, append keys from row which are present in self._shift, and None f
 </div>
 <dl class="simple">
 <dt>A JyFilter is either a lambda run on a row (dictionary) returning a <cite>bool</cite>, or a dictionary which will return <cite>True</cite> if every value of a row matches those in the filter. It can be written by hand without instantiating any class, just the <cite>lambda</cite> or <cite>dict</cite>. Several methods and functions use <cite>JyFilter</cite>:</dt><dd><ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">jable.JyFrame.does_matchIndex()</span></code></p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">jable.JyFrame.any_matchingIdices()</span></code></p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">jable.JyFrame.get_matchingIndices()</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">JyFrame.does_matchIndex()</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">JyFrame.any_matchingIdices()</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">JyFrame.get_matchingIndices()</span></code></p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">jable.JyFrame.set_where()</span></code></p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">jable.JyFrame.remove_where()</span></code></p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">jable.filter()</span></code></p></li>
@@ -321,6 +337,7 @@ Does not change the order of columns at all</p>
     <h3><a href="index.html">Table of Contents</a></h3>
     <ul>
 <li><a class="reference internal" href="#">The <cite>JyFrame</cite> Class</a><ul>
+<li><a class="reference internal" href="#jable.JyFrame.__getitem__"><code class="docutils literal notranslate"><span class="pre">JyFrame.__getitem__()</span></code></a></li>
 <li><a class="reference internal" href="#jable.JyFrame"><code class="docutils literal notranslate"><span class="pre">JyFrame</span></code></a><ul>
 <li><a class="reference internal" href="#jable.JyFrame.any_matchingIndices"><code class="docutils literal notranslate"><span class="pre">JyFrame.any_matchingIndices()</span></code></a></li>
 <li><a class="reference internal" href="#jable.JyFrame.append"><code class="docutils literal notranslate"><span class="pre">JyFrame.append()</span></code></a></li>
@@ -334,7 +351,6 @@ Does not change the order of columns at all</p>
 <li><a class="reference internal" href="#jable.JyFrame.remove_where"><code class="docutils literal notranslate"><span class="pre">JyFrame.remove_where()</span></code></a></li>
 <li><a class="reference internal" href="#jable.JyFrame.set_where"><code class="docutils literal notranslate"><span class="pre">JyFrame.set_where()</span></code></a></li>
 <li><a class="reference internal" href="#jable.JyFrame.write_file"><code class="docutils literal notranslate"><span class="pre">JyFrame.write_file()</span></code></a></li>
-<li><a class="reference internal" href="#jable.JyFrame.__getitem__"><code class="docutils literal notranslate"><span class="pre">JyFrame.__getitem__()</span></code></a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#filters-with-jyfilter">Filters with <cite>JyFilter</cite></a></li>

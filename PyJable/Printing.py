@@ -4,15 +4,20 @@
     Inject jable.JFrame as needed; we use the Protocol `Table`
 """
 
-from typing import Protocol, Self
+from typing import Literal, Protocol, runtime_checkable, Self
 from abc import abstractmethod
-from collections.abc import MutableSequence
+#from collections.abc import MutableSequence
 
-class Table( Protocol, MutableSequence ):
+# -- Settings
+# Maximum length of string to print if inferred from table
+_DEFAULT_MAX_STR_LEN: int = 50
+
+@runtime_checkable
+class Table( Protocol ):
     """
         Interface for JsonTable
         
-        Includes from MutableSequence:
+        Conforms to collections.abc.MutableSequence:
             __len__
             __getitem__
             __setitem__
@@ -20,7 +25,7 @@ class Table( Protocol, MutableSequence ):
             insert
     """
     
-    # -- MutableSequence
+    # -- collections.abc.MutableSequence
     def __len__( self: Self ) -> int:
         raise NotImplementedError()
     #
@@ -67,6 +72,7 @@ class Table( Protocol, MutableSequence ):
 
 ## -- Display
 
+## -- Display Helpers
 def _set_stringToLen(
     val: any,
     length: int
@@ -90,22 +96,41 @@ def _maxLen_forKey(
     table: Table,
     key: str
     ) -> int:
+    key_len: int = len( key )
+    
+    # If the table has no rows, we can ignore values, such as in fixed, which might appear
+    if len( table ) <= 0:
+        return min( key_len, _DEFAULT_MAX_STR_LEN )
+    #
+    
     if key in table._fixed:
-        return len( table._fixed[key] )
+        _len = max( key_len, len( str(table._fixed[key]) ) )
     #
-    
-    if key in table._shiftIndex:
-        return max(
-            len( val ) for val in table._shiftIndex[ key ]
-        )
+    elif key in table._shiftIndex:
+        if len( table._shiftIndex[ key ] ) > 0:
+            _len = max(
+                len( str(val) ) for val in table._shiftIndex[ key ]
+            )
+            _len = max( _len, key_len )
+        #
+        else:
+            _len = key_len
+        #/if len( table._shiftIndex[ key ] ) > 0/else
     #
-    
-    if key in table._shift:
-        return max(
-            len( val ) for val in table._shift[ key ]
-        )
+    elif key in table._shift and key not in table._shiftIndex:
+        if len( table._shift[ key ] ) > 0:
+            _len = max(
+                len( str(val) ) for val in table._shift[ key ]
+            )
+            _len = max( _len, key_len )
+        else:
+            _len = key_len
+        #/if len( table._shift[ key ] ) > 0
     #
-    raise Exception("Missing key={}".format(key))
+    else:
+        raise Exception("Missing key={}".format(key))
+    #
+    return min( _len, _DEFAULT_MAX_STR_LEN )
 #/def _maxLen_forKey
 
 def _get_stringLength(
@@ -132,23 +157,36 @@ def _get_stringLength(
     #
 #/def _get_stringLength
 
+# -- Interface
+
 def prettyprint(
-    table: Table,
+    table: Table | list | dict,
     columns: list[ str ] = [],
     column_width: int | str | list[ int | None ] | dict[ str, int ] = [],
     max_rows: int | None = None
     ) -> None:
     """
-        Prints a display of the given columns lined up. If no columns provided, prints all
+        Prints a display of the given columns lined up. If no columns provided, prints all.
+        
+        Will simply print lists, dictionaries, or not `Table` items, since they can appear as parts of tables as columns, rows, or items.
     """
-    keys: list[ str ] = table.keys()
+    # Handle non `Table` (JyFrame) items
+    if isinstance( table, list | dict ):
+        print( table )
+        return
+    #
+    elif not isinstance( table, Table ):
+        print( table )
+        return
+    #
+    
     if columns == []:
-        columns = keys
+        columns = table.keys()
     #
     
     if column_width == []:
         column_width = [
-            len( col ) for col in columns
+            _maxLen_forKey( table = table, key = key ) for key in columns
         ]
     #
     elif isinstance(
