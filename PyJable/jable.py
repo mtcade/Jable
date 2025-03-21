@@ -517,8 +517,35 @@ class JyFrame():
     
     # -- Modification
     
-    def _set_index_withDict( self: Self, index: int, row: dict ) -> None:
+    def _set_index_withDict(
+        self: Self,
+        index: int,
+        row: dict[ str, any ] | Sequence
+        ) -> None:
+        """
+            Updates a specific rows with a given set of values
+            
+            If we update with a Sequence, then it must correspond to self.keys()
+        """
+        # Wrangle row into a dict if necessary
+        if isinstance( row, dict ):
+            ...
+        #
+        elif isinstance( row, Sequence ):
+            # Row must match self.keys()
+            assert len( row ) == self.shape[1]
+            _keys = self.keys()
+            
+            row = {
+                _keys[j]: row[j] for j in range( self.shape[1] )
+            }
+        #
+        else:
+            raise Exception("Bad row={}".format( row ))
+        #/switch type( row )
+        
         updated_shift: bool = False
+    
         for key, val in row.items():
             if key in self._fixed:
                 if self._fixed[ key ] is None:
@@ -603,13 +630,22 @@ class JyFrame():
     
     def _setItem_withDuple(
         self: Self,
-        rows: int | slice | Sequence[ int ],
-        columns: str | Sequence[ str ],
-        newvalue: any
+        newvalue: any,
+        rows: int | slice | Sequence[ int ] = [],
+        columns: str | Sequence[ str ] = [],
         ) -> None:
         """
             Called from ``__setitem__()`` when we use bracket setting with two items, like `jyFrame[ row, col ] = newvalue`
+            
+            Default for rows is all rows, default for columns is all columns
         """
+        if rows == []:
+            rows = list( range( self.shape[0] ) )
+        #
+        if columns == []:
+            columns = self.keys()
+        #
+        
         if isinstance( rows, int ) and isinstance( columns, str ):
             # Single cell: `jyFrame[0,"col"] = newvalue`
             self._set_index_withDict( rows, { columns: newvalue } )
@@ -655,23 +691,37 @@ class JyFrame():
             return
         #
         elif isinstance( rows, slice | Sequence ) and isinstance( columns, Sequence ):
-            # Multiple rows and columns; setting from JyFrame
+            # Multiple rows and columns; setting from JyFrame, or a list of lists
             if isinstance( rows, slice ):
                 rows = self._list_fromSlice(
                     rows
                 )
             #
-            
-            assert isinstance( newvalue, JyFrame )
+
             assert len( newvalue ) == len( rows )
-            assert set( newvalue.keys() ) == set( columns )
 
             for i in range( len( newvalue ) ):
-                self._set_index_withDict(
-                    rows[ i ],
-                    newvalue[ i ]
-                )
-            #
+                _val = newvalue[ i ]
+                if isinstance( _val, dict ):
+                    self._set_index_withDict(
+                        rows[ i ],
+                        _val
+                    )
+                #
+                elif isinstance( _val, Sequence ):
+                    assert len( _val ) == len( columns )
+                    self._set_index_withDict(
+                        rows[ i ],
+                        {
+                            columns[j]: _val[j]\
+                                for j in range( len( _val ) )
+                        }
+                    )
+                #
+                else:
+                    raise Exception("Bad _val={}".format( _val ) )
+                #/switch type( _val )
+            #/for i in range( len( newvalue ) )
             return
         #
         else:
@@ -692,9 +742,26 @@ class JyFrame():
             `jyFrame[ col: str ] = newColumn: list[ any ]`: Set entirety of new column
             `jyFrame[ col: str ] = rowsDict: dict[ row: int, newvalue: any ]`: for a dictionary indexed by integers, set those rows for `col` to be the value in the dict
         """
-        if isinstance( index, int ) and isinstance( newvalue, dict ):
-            self._set_index_withDict( index = index, row = newvalue )
-            return
+        if isinstance( index, int ):
+            # A full row
+            if isinstance( newvalue, dict ):
+                self._set_index_withDict( index = index, row = newvalue )
+                return
+            #
+            elif isinstance( newvalue, Sequence ):
+                _keys = self.keys()
+                assert len( newvalue ) == self.shape[1]
+                self._set_index_withDict(
+                    index = index,
+                    row = {
+                        _keys[ j ]: newvalue[ j ] for j in range( self.shape[1] )
+                    }
+                )
+                return
+            #
+            else:
+                raise Exception("Bad newvalue={}".format(newvalue))
+            #/switch type( newvalue )
         #
         elif isinstance( index, str ):
             if index in self._fixed:
@@ -711,16 +778,52 @@ class JyFrame():
             #
             raise Exception("Unrecognized index={}, newvalue={}".format( index, newvalue ))
         #
-        elif isinstance( index, tuple ):
-            # row(s), col(s)
-            assert len( index ) == 2
-            return self._setItem_withDuple(
-                rows = index[0],
-                columns = index[1],
-                newvalue = newvalue
+        elif isinstance( index, slice ):
+            # Multiple rows
+            # newvalue can be a list of dictionaries,
+            #  or perhaps a JyFrame. Either way, iterate through
+            #  and add to the rows
+            rows: list[ int ] = self._list_fromSlice( index )
+            self._setItem_withDuple(
+                newvalue = newvalue,
+                rows = rows
             )
-            
             return
+        #
+        elif isinstance( index, tuple ) and len( index ) == 2:
+            # row(s), col(s)
+            self._setItem_withDuple(
+                newvalue = newvalue,
+                rows = index[0],
+                columns = index[1]
+            )
+            return
+        #
+        elif isinstance( index, Sequence ):
+            # List of rows, or list of strings
+            if all(
+                isinstance( key, int ) for key in index
+            ):
+                # List of row indices
+                # newvalue better be something like a list of dicts or a JyFrame itself
+                self._setItem_withDuple(
+                    newvalue = newvalue,
+                    rows = index
+                )
+            #
+            elif all(
+                isinstance( key, str ) for key in index
+            ):
+                # List of columns
+                self._setItem_withDuple(
+                    newvalue = newvalue,
+                    columns = index
+                )
+                return
+            #
+            else:
+                raise Exception("Bad index={}".format( index ))
+            #
         #
         else:
             raise Exception(
@@ -729,15 +832,29 @@ class JyFrame():
                 )
             )
         #/switch { class(index), class( newvalue ) }
+        raise Exception("Unexpected EoF")
     #/def __setitem__
     
-    def insert( self: Self, index: int, value: dict[ str, any ] ) -> None:
-        # Insert `None` at the index for each shift value, then set via __setitem
+    def insert( self: Self, index: int, newvalue: dict[ str, any ] | list[ any ] ) -> None:
+        # Insert `None` at the index for each shift value, then set via __setitem__
+        if isinstance( newvalue, dict ):
+            ...
+        elif isinstance( newvalue, Sequence ):
+            assert not isinstance( newValue, Self )
+            assert len( newvalue ) == self.shape[1]
+            _keys = self.keys()
+            newvalue = {
+                _keys[j]: newvalue[j]\
+                    for j in range( self.shape[1])
+            }
+        #
+        
         for key in self._shift.keys():
             self._shift[ key ].insert( index, None )
         #
         self._len += 1
-        self.__setitem__( index = index, newvalue = value )
+        self.__setitem__( index = index, newvalue = newvalue )
+        return
     #/def insert
     
     def set_where(
@@ -868,6 +985,23 @@ class JyFrame():
         self.shape = ( self._len, self.shape[1])
         return
     #/def append
+    
+    def extend(
+        self: Self,
+        newvalue: Self | Sequence,
+        strict: bool = False
+        ) -> None:
+        """
+            Extend with a JyFrame, or something like a list of dictionaries
+        """
+        for val in newvalue:
+            self.append(
+                val,
+                strict = strict
+            )
+        #
+        return
+    #/def extend
     
     # -- Removal
     
@@ -1198,7 +1332,6 @@ def fromFile(
     return jFrame
 #/def fromFile
 
-# Synonoym: fromFile
 def from_file(
     fp: str,
     decoder: json.JSONDecoder | None = None
