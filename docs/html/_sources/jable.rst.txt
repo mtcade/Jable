@@ -36,11 +36,11 @@ A JyFilter is either a lambda run on a row (dictionary) returning a `bool`, or a
     - ``JyFrame.does_matchIndex()``
     - ``JyFrame.any_matchingIdices()``
     - ``JyFrame.get_matchingIndices()``
-    - ``jable.JyFrame.set_where()``
-    - ``jable.JyFrame.remove_where()``
-    - ``jable.filter()``
-    - ``jable.filter_returnFirst()``
-    - ``jable.filter_expectOne()``
+    - ``JyFrame.set_where()``
+    - ``JyFrame.remove_where()``
+    - ``filter()``
+    - ``filter_returnFirst()``
+    - ``filter_expectOne()``
 
 
 Other Module Functions

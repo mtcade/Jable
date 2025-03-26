@@ -1392,7 +1392,7 @@ def read_csv(
         
         Quick and dirty; reads entire csv with only `shift` data. The result is a bigger file. If you want to make it more efficient, with `fixed` and `shiftIndex` values, then use ``.consolidate()``
     """
-    
+    raise Exception("UC")
 #/def read_csv
 
 ## -- Transformations
