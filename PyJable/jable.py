@@ -173,6 +173,24 @@ class JyFrame():
         return list( self._shift.keys() )
     #
     
+    def makeColumn_shift(
+        self: Self,
+        col: str
+        ) -> None:
+        """
+            Converts a column to a shift column
+        """
+        if col in self._shift:
+            return
+        #
+        if col in self._fixed:
+            self._shift[ col ] = [ self._fixed[ col ] ]*len( self )
+            del self._fixed[ col ]
+            return
+        #
+        raise Exception("Missing from keys col={}".format(col))
+    #/def makeColumn_shift
+    
     # -- Getting and Iterating
     
     def __iter__( self: Self ) -> "JyFrameIterator":
@@ -455,6 +473,8 @@ class JyFrame():
         return str( self.as_dict() )
     #/def __str__
     
+    # -- Indexing
+    
     def does_matchIndex(
         self: Self,
         jyFilter: JyFilter,
@@ -515,7 +535,7 @@ class JyFrame():
     #/def get_matchingIndices
     
     
-    # -- Modification
+    # -- Modification: Setting new Values
     
     def _set_index_withDict(
         self: Self,
@@ -873,7 +893,7 @@ class JyFrame():
         row: dict[ str, any ],
         limit: int | None = None,
         verbose: int = 0
-    ) -> None:
+        ) -> None:
         """
             Update every row with the given literal row, if it matches jyFilter
             
@@ -924,19 +944,20 @@ class JyFrame():
             If strict, append row which has keys a subset of the keys of self._shift
             If not strict, append keys from row which are present in self._shift, and None for keys missing from row
         """
+        # Make sure fixed keys match
+        for key in self._fixed:
+            if key in row:
+                assert row[key] == self._fixed[key]
+            #/if key in row
+        #/for key in self._fixed
+
         if strict:
-            # 2025-02-13: Unintuitive behavior when inserting a row
-            #    which just happens to have a fixed value in it
-            #assert not any( key in self._fixed for key in row )
             assert all( key in self.keys() for key in row )
-            # Make sure fixed values match
-            for key in self._fixed:
-                if key in row:
-                    assert row[key] == self._fixed[key]
-                #/if key in row
-            #/for key in self._fixed
             
             for key, val in row.items():
+                if key in self._fixed:
+                    continue
+                #
                 if val is None:
                     self._shift[ key ].append( val )
                 elif key in self._shiftIndex:
@@ -984,12 +1005,6 @@ class JyFrame():
                     self._shift[ key ].append( None )
                 #/if key in row/else
             #/for key in self._shift.keys()
-            # Update fixed if present
-            for key in self._fixed:
-                if key in row:
-                    self._fixed[ key ] = row[ key ]
-                #
-            #/for key in self._fixed
         #/if strict/else
         self._len += 1
         self.shape = ( self._len, self.shape[1])
@@ -1004,6 +1019,7 @@ class JyFrame():
         """
             Extend with a JyFrame, or something like a list of dictionaries
         """
+        print("# appending with strict={}".format( strict ) )
         for val in newvalue:
             self.append(
                 val,
@@ -1134,17 +1150,17 @@ class JyFrameIterator():
 # -- Initializers
 
 def fromDict(
-    jFrame: JyFrameDict
+    jyFrameDict: JyFrameDict
     ) -> JyFrame:
     """
         Converts the raw json to JyFrame, without adding any structure
     """
     return JyFrame(
-        fixed = data["_fixed"],
-        shift = data["_shift"],
-        shiftIndex = data["_shiftIndex"],
-        keyTypes = data["_keyTypes"],
-        meta = data["_meta"]
+        fixed = jyFrameDict["_fixed"],
+        shift = jyFrameDict["_shift"],
+        shiftIndex = jyFrameDict["_shiftIndex"],
+        keyTypes = jyFrameDict["_keyTypes"],
+        meta = jyFrameDict["_meta"]
     )
 #/def fromDict
 
