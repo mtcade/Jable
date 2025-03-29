@@ -1,7 +1,11 @@
 The `JyFrame` Class
 ####################
 
-The `JyFrame` can be treated like tabular data, indexed by a row integer and column string. There are five parts to the JyFrame:
+.. automodule:: PyJable.jable
+
+The `JyFrame` can be treated like tabular data, indexed by a row integer and column string. You access it much like a 2 dimensional `numpy.ndarray` but always with 2 dimensions. There is even an optional field for storing column classes. No parts of the JyFrame base enforce or set any of these, and they are left purely for extensions.
+
+  There are five parts to the JyFrame:
 
     #. `shift`: A regular dictionary mapping string column names to lists of literal values
     #. `shiftIndex`: A set of values which the user can mostly ignore. If a column from `shift` is present as a key in `shiftIndex` then for `col: str`, the values in the list of `shift[col]` will be integers, referring to the object in the corresponding index of `shiftIndex[col]`. So if `shift["name"][3] = 1` and `shiftIndex["name"] = ["Tom","Jerry"]`, then the real value of `shift["name"][3] = shiftIndex["name"][1] = "Jerry"`.
@@ -19,9 +23,9 @@ Iterating over a JyFrame gives each row as a dictionary.
 
 Get one or many items with bracket notation:
 
-.. automethod:: jable.JyFrame.__getitem__
+.. automethod:: PyJable.jable.JyFrame.__getitem__
 
-.. autoclass:: jable.JyFrame
+.. autoclass:: PyJable.jable.JyFrame
     :members: keys, keys_fixed, get_fixed, get_fixed_withDefaultDict, as_dict, does_matchIndex, any_matchingIndices, get_matchingIndices, set_where, append, remove, remove_where, write_file
 
 
@@ -51,28 +55,28 @@ Used for getting new `JyFrame`, rows, and other values without modifying any exi
 Initializing
 =============
 
-.. autofunction:: jable.fromHeaders
+.. autofunction:: PyJable.jable.fromHeaders
 
-.. autofunction:: jable.likeJyFrame
+.. autofunction:: PyJable.jable.likeJyFrame
 
-.. autofunction:: jable.fromFile
+.. autofunction:: PyJable.jable.fromFile
 
-.. autofunction:: jable.from_file
+.. autofunction:: PyJable.jable.from_file
 
-.. autofunction:: jable.fromFile_shift
+.. autofunction:: PyJable.jable.fromFile_shift
 
 Filter Functions
 ==================
 
-.. autofunction:: jable.filter
+.. autofunction:: PyJable.jable.filter
 
-.. autofunction:: jable.filter_returnFirst
+.. autofunction:: PyJable.jable.filter_returnFirst
 
-.. autofunction:: jable.filter_expectOne
+.. autofunction:: PyJable.jable.filter_expectOne
 
 Other transformations
 ========================
 
-.. autofunction:: jable.sortedBy
+.. autofunction:: PyJable.jable.sortedBy
 
 

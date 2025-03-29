@@ -1,10 +1,12 @@
 #
 """
+    HHHGGG
     A number row, named column alternative to .csv, instead storing the object as json
     
     This permits more complex objects, by allowing any type as an object, and storing anything which can be serialized as an item in a json list
     
     For maximal reliability, imports only the standard library
+    HHHGGG
 """
 
 import json

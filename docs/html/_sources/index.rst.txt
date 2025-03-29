@@ -3,17 +3,18 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to Jable
-=================================
+Jable
+========
 
 Jable is a simple too for serializing simple tabular data for casual use on the disk, as an improvement to the .csv format.
 
-The `JyFrame` is a simple, unassuming representation of the Json Table (jable). It has rows as numbers, columns as strings. There are two reasons to use it over .csv:
+The `JyFrame` is a simple, unassuming representation of the Json Table (jable). Acess and set data with simple bracket notation, `jyFrame[ row(s), column(s) ]`.
+It has rows as numbers, columns as strings. There are two situations to use it over .csv:
 
     1. It can encode anything serializable to Json as an item in a cell, with support for custom encoders and decoders
     2. It can save space by not repeating the same values over and over
     
-Otherwise, it does not offer many powers other tabular data do not.
+Otherwise, it does not offer many powers other tabular data do not. Use it for small, on disk data, not database or big data applications.
 
 .. toctree::
    :maxdepth: 2
@@ -24,7 +25,7 @@ Otherwise, it does not offer many powers other tabular data do not.
 
 
 Indices and tables
-==================
+===================
 
 * :ref:`genindex`
 * :ref:`modindex`
