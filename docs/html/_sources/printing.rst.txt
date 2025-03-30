@@ -1,0 +1,9 @@
+Printing ``Pyjable.jable.JyFrame``
+############################################
+
+.. automodule:: PyJable.printing
+
+.. autofunction:: PyJable.printing.prettyprint
+
+
+

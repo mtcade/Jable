@@ -13,6 +13,7 @@
     <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Printing Pyjable.jable.JyFrame" href="printing.html" />
     <link rel="prev" title="Jable" href="index.html" />
    
   <link rel="stylesheet" href="_static/custom.css" type="text/css" />
@@ -33,11 +34,6 @@
             
   <section id="module-PyJable.jable">
 <span id="the-jyframe-class"></span><h1>The <cite>JyFrame</cite> Class<a class="headerlink" href="#module-PyJable.jable" title="Link to this heading">¶</a></h1>
-<p>HHHGGG
-A number row, named column alternative to .csv, instead storing the object as json</p>
-<p>This permits more complex objects, by allowing any type as an object, and storing anything which can be serialized as an item in a json list</p>
-<p>For maximal reliability, imports only the standard library
-HHHGGG</p>
 <p>The <cite>JyFrame</cite> can be treated like tabular data, indexed by a row integer and column string. You access it much like a 2 dimensional <cite>numpy.ndarray</cite> but always with 2 dimensions. There is even an optional field for storing column classes. No parts of the JyFrame base enforce or set any of these, and they are left purely for extensions.</p>
 <blockquote>
 <div><p>There are five parts to the JyFrame:</p>
@@ -58,8 +54,9 @@ HHHGGG</p>
 </ol>
 </div></blockquote>
 </div></blockquote>
-<p>Iterating over a JyFrame gives each row as a dictionary.</p>
-<p>Get one or many items with bracket notation:</p>
+<p>Iterating over a JyFrame gives each row as a dictionary. see <code class="docutils literal notranslate"><span class="pre">PyJable.jable.__getitem__()</span></code> for about accessing one or many items in the table. See <code class="docutils literal notranslate"><span class="pre">PyJable.jable.JyFilter()</span></code> for selecting and filtering rows.</p>
+<section id="accessing-and-settings-values">
+<h2>Accessing and Settings Values<a class="headerlink" href="#accessing-and-settings-values" title="Link to this heading">¶</a></h2>
 <dl class="py method">
 <dt class="sig sig-object py" id="PyJable.jable.JyFrame.__getitem__">
 <span class="sig-prename descclassname"><span class="pre">JyFrame.</span></span><span class="sig-name descname"><span class="pre">__getitem__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">index</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">slice</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">slice</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">any</span></span></span><a class="headerlink" href="#PyJable.jable.JyFrame.__getitem__" title="Link to this definition">¶</a></dt>
@@ -181,6 +178,7 @@ If not strict, append keys from row which are present in self._shift, and None f
 
 </dd></dl>
 
+</section>
 <section id="filters-with-jyfilter">
 <h2>Filters with <cite>JyFilter</cite><a class="headerlink" href="#filters-with-jyfilter" title="Link to this heading">¶</a></h2>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">JyFilter</span><span class="p">:</span> <span class="nb">type</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">[</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">any</span> <span class="p">]</span> <span class="o">|</span> <span class="n">Callable</span><span class="p">[</span> <span class="nb">dict</span><span class="p">[</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">any</span> <span class="p">],</span> <span class="nb">bool</span> <span class="p">]</span>
@@ -351,12 +349,12 @@ Does not change the order of columns at all</p>
 <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul class="current">
 <li class="toctree-l1 current"><a class="current reference internal" href="#">The <cite>JyFrame</cite> Class</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#PyJable.jable.JyFrame.__getitem__"><code class="docutils literal notranslate"><span class="pre">JyFrame.__getitem__()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="#PyJable.jable.JyFrame"><code class="docutils literal notranslate"><span class="pre">JyFrame</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#accessing-and-settings-values">Accessing and Settings Values</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#filters-with-jyfilter">Filters with <cite>JyFilter</cite></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#other-module-functions">Other Module Functions</a></li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="printing.html">Printing <code class="docutils literal notranslate"><span class="pre">Pyjable.jable.JyFrame</span></code></a></li>
 </ul>
 
 <div class="relations">
@@ -364,6 +362,7 @@ Does not change the order of columns at all</p>
 <ul>
   <li><a href="index.html">Documentation overview</a><ul>
       <li>Previous: <a href="index.html" title="previous chapter">Jable</a></li>
+      <li>Next: <a href="printing.html" title="next chapter">Printing <code class="docutils literal notranslate"><span class="pre">Pyjable.jable.JyFrame</span></code></a></li>
   </ul></li>
 </ul>
 </div>

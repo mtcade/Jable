@@ -3,25 +3,8 @@ The `JyFrame` Class
 
 .. automodule:: PyJable.jable
 
-The `JyFrame` can be treated like tabular data, indexed by a row integer and column string. You access it much like a 2 dimensional `numpy.ndarray` but always with 2 dimensions. There is even an optional field for storing column classes. No parts of the JyFrame base enforce or set any of these, and they are left purely for extensions.
-
-  There are five parts to the JyFrame:
-
-    #. `shift`: A regular dictionary mapping string column names to lists of literal values
-    #. `shiftIndex`: A set of values which the user can mostly ignore. If a column from `shift` is present as a key in `shiftIndex` then for `col: str`, the values in the list of `shift[col]` will be integers, referring to the object in the corresponding index of `shiftIndex[col]`. So if `shift["name"][3] = 1` and `shiftIndex["name"] = ["Tom","Jerry"]`, then the real value of `shift["name"][3] = shiftIndex["name"][1] = "Jerry"`.
-    #. `fixed`: A "column" which has the same value in every row. This allows us to list the value only once. Beware updating this, as it will change the value for every row. There are two ways to consider `fixed`:
-        
-        #. A space saver, where we simply have the same value for every row. In this case, you can ignore that it's different from any other columns or values
-        
-        #. A set of variables associated with the entire table. For example, you might have a relative `"path"` column, which is relative to a fixed `"root"`. If you know this is the case, you should treat it specially with your code, and keep track using the ``JyFrame.fixed_keys()`` method.
-        
-    #. `keyTypes`: dictionary mapping columns to a type as a python type, or a string. The base JyFrame class makes no checks or enforcement of this; it is only to keep track of columns for the user. As a result, the user can provide `customTypes: dict[ str, type ]` argument to ``JyFrame()``. Otherwise, strings as classes will be left as strings in the `keyTypes` dictionary. Upon serialization to a dict, such as for saving, it will turn into `{ col: str(_type) for col, _type in keyTypes.values() }`.
-    
-    #. `meta`: An arbitrary dictionary. The base JyFrame code does not write or read this, but it will preserve it when serializing as well as possible. Store whatever information you want here for subclasses or business logic, but try to make it serializable.
-
-Iterating over a JyFrame gives each row as a dictionary.
-
-Get one or many items with bracket notation:
+Accessing and Settings Values
+********************************
 
 .. automethod:: PyJable.jable.JyFrame.__getitem__
 

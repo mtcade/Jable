@@ -1,7 +1,7 @@
 """
-    Utilities to read and print json tables
+    This module is used to print the `JyFrame` in a readable way, with headers, separators, and all.
     
-    Inject jable.JFrame as needed; we use the Protocol `Table`
+    Methods do use direct reference ``PyJable.jable.JyFrame`` from :doc:`jabel`. Instead, inputs are annotated with the Protocol `Table`.
 """
 
 from typing import Literal, Protocol, runtime_checkable, Self
@@ -166,9 +166,16 @@ def prettyprint(
     max_rows: int | None = None
     ) -> None:
     """
-        Prints a display of the given columns lined up. If no columns provided, prints all.
+        :param Table table: Table to print to LaTeX
+        :param list[ str ]|None columns: Which columns to print. If `None`, prints all.
+        :param int|str|list[ int|None ]|dict[ str, int ] column_width: Value(s) for maximum width of each column to print.
+            * int: Constant max width for each column
+            * str: No longer than provided value
+            * list[ int|None ]: Integer max width, or no maximum, by column aligning with `columns`
+            * dict[ str, int ]: Map from column names to maximum length. If not present, no maximum length for that column.
+        :param int max_rows: Largest number of rows allowed to print
         
-        Will simply print lists, dictionaries, or not `Table` items, since they can appear as parts of tables as columns, rows, or items.
+        Prints a table with basic separators and alignment.
     """
     # Handle non `Table` (JyFrame) items
     if isinstance( table, list | dict ):
@@ -341,13 +348,23 @@ def _latex_str(
 def latexprint_table(
     table: Table,
     columns: list[ str ] | None = None,
-    column_alignment: dict[ str, Literal['c','l','r'] ] = {},
+    column_alignment: dict[
+            str,
+            Literal['c','l','r']
+        ] | list[
+            Literal['c','l','r']
+    ] = {},
     max_rows: int | None = None
     ) -> None:
     """
-        Prints a LaTeX table
+        :param Table table: Table to print to LaTeX
+        :param list[ str ]|None columns: Which columns to print. If `None`, prints all.
+        :param dict[ str, Literal['c','l','r'] ]|list[Literal['c','l','r']] column_alignment: Dictionary from column to LaTeX table alignemnt characters, or a list of table alignment characters same length as `columns`. Default is `c` for all.
+        :param int max_rows: Largest number of rows allowed to print
         
-        Does not include table and centering, just tabular
+        Prints a LaTeX table suitable for copy pasting.
+        
+        Does not include table enronment, centering, labels, captions, or any other LaTeX outside the tabular environment.
     """
     if columns is None:
         columns = table.keys()
@@ -361,9 +378,22 @@ def latexprint_table(
     #
     
     # Default column alignment is 'c'
-    column_alignment = {
-        col: 'c' for col in columns
-    } | column_alignment
+    if isinstance( column_alignment, dict ):
+        column_alignment = {
+            col: 'c' for col in columns
+        } | column_alignment
+    #
+    elif isinstance([ column_alignment, list ] ):
+        if not len( columns ) == len( column_alignment ):
+            raise ValueError("Incorrect lengths of columns, column_alignment")
+        #
+        column_alignment = {
+            columns[ j ]: column_alignment[ j ] for j in range( len( columns ) )
+        }
+    #
+    else:
+        raise TypeError("Unrecognized column_alignment={}".format(column_alignment))
+    #
     
     # Tabluar start
     # { c c c }
