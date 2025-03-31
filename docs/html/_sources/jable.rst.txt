@@ -9,7 +9,7 @@ Accessing and Settings Values
 .. automethod:: PyJable.jable.JyFrame.__getitem__
 
 .. autoclass:: PyJable.jable.JyFrame
-    :members: keys, keys_fixed, get_fixed, get_fixed_withDefaultDict, as_dict, does_matchIndex, any_matchingIndices, get_matchingIndices, set_where, append, remove, remove_where, write_file
+    :members: keys, keys_fixed, get_fixed, get_fixed_withDefaultDict, as_dict, does_matchIndex, any_matchingIndices, get_matchingIndices, set_where, append, makeColumn_shift, addColumn, remove, remove_where, write_file
 
 
 Filters with `JyFilter`
@@ -41,6 +41,8 @@ Initializing
 .. autofunction:: PyJable.jable.fromHeaders
 
 .. autofunction:: PyJable.jable.likeJyFrame
+
+.. autofunction:: PyJable.jable.copyJyFrame
 
 .. autofunction:: PyJable.jable.fromFile
 

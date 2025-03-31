@@ -93,6 +93,21 @@
 </dl>
 <p>see <code class="docutils literal notranslate"><span class="pre">.__getitem__</span></code> for acessing values</p>
 <dl class="py method">
+<dt class="sig sig-object py" id="PyJable.jable.JyFrame.addColumn">
+<span class="sig-name descname"><span class="pre">addColumn</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">col</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">values</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtype</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">type</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#PyJable.jable.JyFrame.addColumn" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>col</strong> (<em>str</em>) – Name for the new column</p></li>
+<li><p><strong>values</strong> (<em>list</em>) – A new literal column of values. Have <cite>len(values) == len(self)</cite></p></li>
+<li><p><strong>dtype</strong> (<em>type</em><em>|</em><em>str</em><em>|</em><em>None</em>) – A type for the new column. If <cite>None</cite> (the default), nothing gets added to <cite>._keyTypes</cite></p></li>
+</ul>
+</dd>
+</dl>
+<p>Add a new column as the exact list of values</p>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="PyJable.jable.JyFrame.any_matchingIndices">
 <span class="sig-name descname"><span class="pre">any_matchingIndices</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">jyFilter</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">any</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">any</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">bool</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="headerlink" href="#PyJable.jable.JyFrame.any_matchingIndices" title="Link to this definition">¶</a></dt>
 <dd><p>Says if at least one row matches jyFilter</p>
@@ -142,13 +157,33 @@ If not strict, append keys from row which are present in self._shift, and None f
 <dl class="py method">
 <dt class="sig sig-object py" id="PyJable.jable.JyFrame.keys">
 <span class="sig-name descname"><span class="pre">keys</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#PyJable.jable.JyFrame.keys" title="Link to this definition">¶</a></dt>
-<dd><p>Gets the equivalent of all column names of the jyFrame, including fixed and nonfixed</p>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>All column names of the jyFrame, including fixed and nonfixed</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>list[ str ]</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="PyJable.jable.JyFrame.keys_fixed">
 <span class="sig-name descname"><span class="pre">keys_fixed</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#PyJable.jable.JyFrame.keys_fixed" title="Link to this definition">¶</a></dt>
-<dd><p>Returns the keys for the fixed dictionary. This is so we don’t have to have <cite>._fixed</cite> used externally</p>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Keys for the fixed dictionary. This is so we don’t have to have <cite>._fixed</cite> used externally</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>list[ str ]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="PyJable.jable.JyFrame.makeColumn_shift">
+<span class="sig-name descname"><span class="pre">makeColumn_shift</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">col</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#PyJable.jable.JyFrame.makeColumn_shift" title="Link to this definition">¶</a></dt>
+<dd><p>Converts a column to a shift column</p>
 </dd></dl>
 
 <dl class="py method">
@@ -216,8 +251,29 @@ If not strict, append keys from row which are present in self._shift, and None f
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>jyFrame</strong> (<a class="reference internal" href="#PyJable.jable.JyFrame" title="PyJable.jable.JyFrame"><em>JyFrame</em></a>) – Frame to intialize like, copying fixed, the shift header, the shift index header, keyTypes, and meta</p>
 </dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>a blank jyFrame with copied headers</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#PyJable.jable.JyFrame" title="PyJable.jable.JyFrame">JyFrame</a></p>
+</dd>
 </dl>
-<p>Gives a blank jyFrame with copied headers</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="PyJable.jable.copyJyFrame">
+<span class="sig-prename descclassname"><span class="pre">PyJable.jable.</span></span><span class="sig-name descname"><span class="pre">copyJyFrame</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">jyFrame</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#PyJable.jable.JyFrame" title="PyJable.jable.JyFrame"><span class="pre">JyFrame</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#PyJable.jable.JyFrame" title="PyJable.jable.JyFrame"><span class="pre">JyFrame</span></a></span></span><a class="headerlink" href="#PyJable.jable.copyJyFrame" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>jyFrame</strong> (<a class="reference internal" href="#PyJable.jable.JyFrame" title="PyJable.jable.JyFrame"><em>JyFrame</em></a>) – Frame to intialize like, copying fixed, the shift header, the shift index header, keyTypes, and meta</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>a new jyFrame with copied headers and the same values</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#PyJable.jable.JyFrame" title="PyJable.jable.JyFrame">JyFrame</a></p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">

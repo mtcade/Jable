@@ -166,42 +166,27 @@ class JyFrame():
     
     def keys( self: Self ) -> list[ str ]:
         """
-            Gets the equivalent of all column names of the jyFrame, including fixed and nonfixed
+            :returns: All column names of the jyFrame, including fixed and nonfixed
+            :rtype: list[ str ]
         """
         return list( self._fixed.keys() ) + list( self._shift.keys() )
     #
     
     def keys_fixed( self: Self ) -> list[ str ]:
         """
-            Returns the keys for the fixed dictionary. This is so we don't have to have `._fixed` used externally
+            :returns: Keys for the fixed dictionary. This is so we don't have to have `._fixed` used externally
+            :rtype: list[ str ]
         """
         return list( self._fixed.keys() )
     #
     
     def keys_shift( self: Self ) -> list[ str ]:
         """
-            All named keys in `._shift`, which includes `._shiftIndex`
+            :returns: All named keys in `._shift`, which includes `._shiftIndex`
+            :rtype: list[ str ]
         """
         return list( self._shift.keys() )
     #
-    
-    def makeColumn_shift(
-        self: Self,
-        col: str
-        ) -> None:
-        """
-            Converts a column to a shift column
-        """
-        if col in self._shift:
-            return
-        #
-        if col in self._fixed:
-            self._shift[ col ] = [ self._fixed[ col ] ]*len( self )
-            del self._fixed[ col ]
-            return
-        #
-        raise Exception("Missing from keys col={}".format(col))
-    #/def makeColumn_shift
     
     # -- Getting and Iterating
     
@@ -959,12 +944,24 @@ class JyFrame():
         # Make sure fixed keys match
         for key in self._fixed:
             if key in row:
-                assert row[key] == self._fixed[key]
+                if row[key] != self._fixed[key]:
+                    raise ValueError(
+                        "Mismatch: row['{}']={}, self._fixed['{}']={}".format(
+                            key, row[key], key, self._fixed[key]
+                        )
+                    )
+                #/if row[key] != self._fixed[key]
             #/if key in row
         #/for key in self._fixed
 
         if strict:
-            assert all( key in self.keys() for key in row )
+            if not all( key in self.keys() for key in row ):
+                raise ValueError(
+                    "Extra keys in row: got {}, expected {}".format(
+                        list( row.keys() ), self.keys()
+                    )
+                )
+            #/if not all( key in self.keys() for key in row )
             
             for key, val in row.items():
                 if key in self._fixed:
@@ -1031,7 +1028,6 @@ class JyFrame():
         """
             Extend with a JyFrame, or something like a list of dictionaries
         """
-        print("# appending with strict={}".format( strict ) )
         for val in newvalue:
             self.append(
                 val,
@@ -1040,6 +1036,71 @@ class JyFrame():
         #
         return
     #/def extend
+    
+    def makeColumn_shift(
+        self: Self,
+        col: str
+        ) -> None:
+        """
+            Converts a column to a shift column
+        """
+        if col in self._shift:
+            return
+        #
+        if col in self._fixed:
+            self._shift[ col ] = [ self._fixed[ col ] ]*len( self )
+            del self._fixed[ col ]
+            return
+        #
+        raise Exception("Missing from keys col={}".format(col))
+    #/def makeColumn_shift
+    
+    def addColumn(
+        self: Self,
+        col: str,
+        values: list,
+        dtype: type | str | None = None
+        ) -> None:
+        """
+            :param str col: Name for the new column
+            :param list values: A new literal column of values. Have `len(values) == len(self)`
+            :param type|str|None dtype: A type for the new column. If `None` (the default), nothing gets added to `._keyTypes`
+            
+            Add a new column as the exact list of values
+        """
+        from copy import deepcopy
+        if col in self.keys():
+            raise ValueError(
+                "Already have {} in self.keys()={}".format(
+                    self.keys()
+                )
+            )
+        #/if col in self.keys()
+        
+        if not isinstance( values, list ):
+            raise TypeError(
+                "Expected type(values)=list, got type(values)={}".format(
+                    type(values)
+                )
+            )
+        #/if not isinstance( values, list )
+        
+        if not len( values ) == len( self ):
+            raise ValueError(
+                "New len(values)={}, len(self)={}".format(
+                    len(values),
+                    len(self)
+                )
+            )
+        #/if not len( values ) == len( self )
+        
+        self._shift[ col ] = deepcopy( values )
+        
+        if dtype is not None:
+            self._keyTypes[ col ] = dtype
+        #
+        return
+    #/def addColumn
     
     # -- Removal
     
@@ -1295,9 +1356,8 @@ def likeJyFrame(
     ) -> JyFrame:
     """
         :param JyFrame jyFrame: Frame to intialize like, copying fixed, the shift header, the shift index header, keyTypes, and meta
-        
-        
-        Gives a blank jyFrame with copied headers
+        :returns: a blank jyFrame with copied headers
+        :rtype: JyFrame
     """
     return fromHeaders(
         fixed = jyFrame._fixed,
@@ -1311,6 +1371,24 @@ def likeJyFrame(
         meta = jyFrame._meta
     )
 #/def likeJyFrame
+
+def copyJyFrame(
+    jyFrame: JyFrame
+    ) -> JyFrame:
+    """
+        :param JyFrame jyFrame: Frame to intialize like, copying fixed, the shift header, the shift index header, keyTypes, and meta
+        :returns: a new jyFrame with copied headers and the same values
+        :rtype: JyFrame
+    """
+    new_jyFrame: JyFrame = likeJyFrame(
+        jyFrame
+    )
+    
+    for row in jyFrame:
+        new_jyFrame.append( row )
+    #
+    return new_jyFrame
+#/def copyJyFrame
 
 def fromFile(
     fp: str,
