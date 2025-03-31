@@ -1,7 +1,7 @@
 """
     This module is used to print the `JyFrame` in a readable way, with headers, separators, and all.
     
-    Methods do use direct reference ``PyJable.jable.JyFrame`` from :doc:`jabel`. Instead, inputs are annotated with the Protocol `Table`.
+    Methods do use direct reference ``PyJable.jable.JyFrame`` from :doc:`jable`. Instead, inputs are annotated with the Protocol `Table`.
 """
 
 from typing import Literal, Protocol, runtime_checkable, Self
@@ -345,7 +345,7 @@ def _latex_str(
     return string_out
 #
 
-def latexprint_table(
+def latexprint(
     table: Table,
     columns: list[ str ] | None = None,
     column_alignment: dict[
