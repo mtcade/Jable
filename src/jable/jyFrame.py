@@ -1,8 +1,8 @@
 #
 """
-The `JyFrame` can be treated like tabular data, indexed by a row integer and column string. You access it much like a 2 dimensional `numpy.ndarray` but always with 2 dimensions. There is even an optional field for storing column classes. No parts of the JyFrame base enforce or set any of these, and they are left purely for extensions.
+The `DataFrame` can be treated like tabular data, indexed by a row integer and column string. You access it much like a 2 dimensional `numpy.ndarray` but always with 2 dimensions. There is even an optional field for storing column classes. No parts of the DataFrame base enforce or set any of these, and they are left purely for extensions.
 
-  There are five parts to the JyFrame:
+  There are five parts to the DataFrame:
 
     #. `shift`: A regular dictionary mapping string column names to lists of literal values
     #. `shiftIndex`: A set of values which the user can mostly ignore. If a column from `shift` is present as a key in `shiftIndex` then for `col: str`, the values in the list of `shift[col]` will be integers, referring to the object in the corresponding index of `shiftIndex[col]`. So if `shift["name"][3] = 1` and `shiftIndex["name"] = ["Tom","Jerry"]`, then the real value of `shift["name"][3] = shiftIndex["name"][1] = "Jerry"`.
@@ -10,13 +10,13 @@ The `JyFrame` can be treated like tabular data, indexed by a row integer and col
         
         #. A space saver, where we simply have the same value for every row. In this case, you can ignore that it's different from any other columns or values
         
-        #. A set of variables associated with the entire table. For example, you might have a relative `"path"` column, which is relative to a fixed `"root"`. If you know this is the case, you should treat it specially with your code, and keep track using the ``JyFrame.fixed_keys()`` method.
+        #. A set of variables associated with the entire table. For example, you might have a relative `"path"` column, which is relative to a fixed `"root"`. If you know this is the case, you should treat it specially with your code, and keep track using the ``DataFrame.fixed_keys()`` method.
         
-    #. `keyTypes`: dictionary mapping columns to a type as a python type, or a string. The base JyFrame class makes no checks or enforcement of this; it is only to keep track of columns for the user. As a result, the user can provide `customTypes: dict[ str, type ]` argument to ``JyFrame()``. Otherwise, strings as classes will be left as strings in the `keyTypes` dictionary. Upon serialization to a dict, such as for saving, it will turn into `{ col: str(_type) for col, _type in keyTypes.values() }`.
+    #. `keyTypes`: dictionary mapping columns to a type as a python type, or a string. The base DataFrame class makes no checks or enforcement of this; it is only to keep track of columns for the user. As a result, the user can provide `customTypes: dict[ str, type ]` argument to ``DataFrame()``. Otherwise, strings as classes will be left as strings in the `keyTypes` dictionary. Upon serialization to a dict, such as for saving, it will turn into `{ col: str(_type) for col, _type in keyTypes.values() }`.
     
-    #. `meta`: An arbitrary dictionary. The base JyFrame code does not write or read this, but it will preserve it when serializing as well as possible. Store whatever information you want here for subclasses or business logic, but try to make it serializable.
+    #. `meta`: An arbitrary dictionary. The base DataFrame code does not write or read this, but it will preserve it when serializing as well as possible. Store whatever information you want here for subclasses or business logic, but try to make it serializable.
 
-Iterating over a JyFrame gives each row as a dictionary. see ``PyJable.jable.__getitem__()`` for about accessing one or many items in the table. See ``PyJable.jable.JyFilter()`` for selecting and filtering rows.
+Iterating over a DataFrame gives each row as a dictionary. see ``PyJable.jable.__getitem__()`` for about accessing one or many items in the table. See ``PyJable.jable.JyFilter()`` for selecting and filtering rows.
 """
 
 import json
@@ -25,8 +25,8 @@ from collections.abc import Sequence
 from typing import Callable, Literal, Self
 from sys import path
 
-# Dictionary representation of the data in a JyFrame
-JyFrameDict: type = dict[{
+# Dictionary representation of the data in a DataFrame
+DataFrameDict: type = dict[{
     "_fixed": dict[ str, any ],
     "_shift": dict[ str, list ],
     "_shiftIndex": dict[ str, list ],
@@ -73,15 +73,15 @@ def row_does_matchJyFilter(
     raise Exception("Unrecognized jyFilter={}".format(jyFilter))
 #/def row_does_matchJyFilter
 
-class JyFrame():
+class DataFrame():
     """
         Stores column data as a combination of three parts:
         
         :param dict[ str, any ] fixed: Columns with the same name for value in every row. You can change its value but that will essentially change it for every row; try to only change it in code that knows it's a fixed key, and sets and gets it with the fixed methods (`.keys_fixed()`, `.get_fixed(...)`)
         :param dict[ str, list ] shift: Where we have a listed literal item as a value, typically a string, float or int, sometimes lists of them, sometimes dictionaries or any other objects
         :param dict[ str list ] shiftIndex: Sometimes, shift columns will have the same value repeated many times. If its column name is in shift index, then the values in shift are integers, referring to the index in shiftIndex of the same column. I.e., if we have `shift["fur_color"] = [1,0,2]` and `shiftIndex["fur_color"] = ["green","orange","purple","red"]`, then the `"fur_color"`s are really `["orange","green","purple"]`
-        :param dict[ str, str | type ] keyTypes: Optional types to set for any columns. No enforcement is done by the JyFrame itself, whether inserting or retriving. It is for your own use. These will be serialized as strings using `str` so add the appropriate functions for custom classes to serialize it as you want, and convert into a class upon reading. Includes support for basic python types
-        :param dict[ str, any ] meta: Another arbitrary dictionary to hold domain specific data, in the jyFrame as `._meta`. No methods write or use this, so edit and read at will or subclass.
+        :param dict[ str, str | type ] keyTypes: Optional types to set for any columns. No enforcement is done by the DataFrame itself, whether inserting or retriving. It is for your own use. These will be serialized as strings using `str` so add the appropriate functions for custom classes to serialize it as you want, and convert into a class upon reading. Includes support for basic python types
+        :param dict[ str, any ] meta: Another arbitrary dictionary to hold domain specific data, in the df as `._meta`. No methods write or use this, so edit and read at will or subclass.
         :param dict[ str, type ] customTypes: A reference to use for deserializing string types from `keyTypes`. Gets checked before builtin types
         
         see ``.__getitem__`` for acessing values
@@ -166,7 +166,7 @@ class JyFrame():
     
     def keys( self: Self ) -> list[ str ]:
         """
-            :returns: All column names of the jyFrame, including fixed and nonfixed
+            :returns: All column names of the df, including fixed and nonfixed
             :rtype: list[ str ]
         """
         return list( self._fixed.keys() ) + list( self._shift.keys() )
@@ -190,11 +190,11 @@ class JyFrame():
     
     # -- Getting and Iterating
     
-    def __iter__( self: Self ) -> "JyFrameIterator":
+    def __iter__( self: Self ) -> "DataFrameIterator":
         """
             Goes through by row giving each row as a dictionary
         """
-        return JyFrameIterator( self )
+        return DataFrameIterator( self )
     #
     
     def _item_by_rowCol(
@@ -252,7 +252,7 @@ class JyFrame():
         shiftIndex = {
             col: self._shiftIndex[ col ] for col in columns if col in self._shiftIndex
         }
-        return JyFrame(
+        return DataFrame(
             fixed = fixed,
             shift = shift,
             shiftIndex = shiftIndex,
@@ -276,23 +276,23 @@ class JyFrame():
         """
             :param int|str|tuple[int | slice | Sequence[ int ], str | Sequence[ str ] ]|slice|Sequence[ int ]|Sequence[ str ] index: Table accessor
         
-            `jyFrame[ row: int, col: str ] -> any` A single item at a location
+            `df[ row: int, col: str ] -> any` A single item at a location
 
-            `jyFrame[ col: str ] -> list` The entire column of values
+            `df[ col: str ] -> list` The entire column of values
 
-            `jyFrame[ row: int ] -> dict[ str, any ]` One row as a dictionary with all keys
+            `df[ row: int ] -> dict[ str, any ]` One row as a dictionary with all keys
 
-            `jyFrame[ rows: Sequence[ int ] | slice ] -> JyFrame` Subset of rows, all columns
+            `df[ rows: Sequence[ int ] | slice ] -> DataFrame` Subset of rows, all columns
 
-            `jyFrame[ columns: Sequence[ str ] ] -> JyFrame` Subset of columns, all rows
+            `df[ columns: Sequence[ str ] ] -> DataFrame` Subset of columns, all rows
 
-            `jyFrame[ row: int, columns: Sequence[ str ] ] -> dict[ str, any ]` One row as a dictionary with subset of columns
+            `df[ row: int, columns: Sequence[ str ] ] -> dict[ str, any ]` One row as a dictionary with subset of columns
 
-            `jyFrame[ rows: Sequence[ int ] | slice, col: str ] -> list`: One column, subset of rows as a list of those items. (If you want to keep some index, then have that index as another column)
+            `df[ rows: Sequence[ int ] | slice, col: str ] -> list`: One column, subset of rows as a list of those items. (If you want to keep some index, then have that index as another column)
 
-            `jyFrame[ rows: Sequence[ int ] | slice, columns: Sequence[ str ] ] -> jyFrame` Subset of both columns and columns
+            `df[ rows: Sequence[ int ] | slice, columns: Sequence[ str ] ] -> DataFrame` Subset of both columns and columns
         """
-        # -- Double value, like `jyFrame[ row, col ]`
+        # -- Double value, like `df[ row, col ]`
         if isinstance( index, tuple ) and len( index ) == 2:
             row = index[0]
             column = index[1]
@@ -361,7 +361,7 @@ class JyFrame():
                 #/switch len( row )
             #
             else:
-                # TODO: return new jyFrame if column is a sequence
+                # TODO: return new df if column is a sequence
                 raise Exception("Bad column={}".format( column ))
             #/switch { type index }
         #/if isinstance( index, tuple ) and len( index ) == 2
@@ -445,7 +445,7 @@ class JyFrame():
         """
     #/def get_fixed_withDefaultDict
     
-    def as_dict( self: Self ) -> JyFrameDict:
+    def as_dict( self: Self ) -> DataFrameDict:
         """
             The dictionary, ready to be saved to the disk as json
             
@@ -656,7 +656,7 @@ class JyFrame():
         columns: str | Sequence[ str ] = [],
         ) -> None:
         """
-            Called from ``__setitem__()`` when we use bracket setting with two items, like `jyFrame[ row, col ] = newvalue`
+            Called from ``__setitem__()`` when we use bracket setting with two items, like `df[ row, col ] = newvalue`
             
             Default for rows is all rows, default for columns is all columns
         """
@@ -668,7 +668,7 @@ class JyFrame():
         #
         
         if isinstance( rows, int ) and isinstance( columns, str ):
-            # Single cell: `jyFrame[0,"col"] = newvalue`
+            # Single cell: `df[0,"col"] = newvalue`
             self._set_index_withDict( rows, { columns: newvalue } )
             return
         #
@@ -712,7 +712,7 @@ class JyFrame():
             return
         #
         elif isinstance( rows, slice | Sequence ) and isinstance( columns, Sequence ):
-            # Multiple rows and columns; setting from JyFrame, or a list of lists
+            # Multiple rows and columns; setting from DataFrame, or a list of lists
             if isinstance( rows, slice ):
                 rows = self._list_fromSlice(
                     rows
@@ -757,11 +757,11 @@ class JyFrame():
         """
             Used in three primary ways:
             
-            `jyFrame[ row: int, col: str ] = newVal: any`: Set single value
-            `jyFrame[ row: int ] = newRow: dict`: Set new row
-            `jyFrame[ col: str ] = newVal: any`, with `col` in `self._fixed.keys()`: Set a fixed value
-            `jyFrame[ col: str ] = newColumn: list[ any ]`: Set entirety of new column
-            `jyFrame[ col: str ] = rowsDict: dict[ row: int, newvalue: any ]`: for a dictionary indexed by integers, set those rows for `col` to be the value in the dict
+            `df[ row: int, col: str ] = newVal: any`: Set single value
+            `df[ row: int ] = newRow: dict`: Set new row
+            `df[ col: str ] = newVal: any`, with `col` in `self._fixed.keys()`: Set a fixed value
+            `df[ col: str ] = newColumn: list[ any ]`: Set entirety of new column
+            `df[ col: str ] = rowsDict: dict[ row: int, newvalue: any ]`: for a dictionary indexed by integers, set those rows for `col` to be the value in the dict
         """
         if isinstance( index, int ):
             # A full row
@@ -808,7 +808,7 @@ class JyFrame():
         elif isinstance( index, slice ):
             # Multiple rows
             # newvalue can be a list of dictionaries,
-            #  or perhaps a JyFrame. Either way, iterate through
+            #  or perhaps a DataFrame. Either way, iterate through
             #  and add to the rows
             rows: list[ int ] = self._list_fromSlice( index )
             self._setItem_withDuple(
@@ -832,7 +832,7 @@ class JyFrame():
                 isinstance( key, int ) for key in index
             ):
                 # List of row indices
-                # newvalue better be something like a list of dicts or a JyFrame itself
+                # newvalue better be something like a list of dicts or a DataFrame itself
                 self._setItem_withDuple(
                     newvalue = newvalue,
                     rows = index
@@ -1026,7 +1026,7 @@ class JyFrame():
         strict: bool = False
         ) -> None:
         """
-            Extend with a JyFrame, or something like a list of dictionaries
+            Extend with a DataFrame, or something like a list of dictionaries
         """
         for val in newvalue:
             self.append(
@@ -1180,7 +1180,7 @@ class JyFrame():
         encoder: json.JSONEncoder | None = None
         ) -> None:
         """
-            Standard method to write to a file as a json, which can be initialized into a jyFrame via `fromDict(...)` after reading
+            Standard method to write to a file as a json, which can be initialized into a df via `fromDict(...)` after reading
         """
         with open( fp, mode ) as _file:
             json.dump(
@@ -1192,48 +1192,55 @@ class JyFrame():
         
         return
     #/def write_file
-#/class JyFrame
+#/class DataFrame
 
-class JyFrameIterator():
+class DataFrameIterator():
     def __init__(
         self: Self,
-        jyFrame: JyFrame
+        df: DataFrame
     ):
         self._index = 0
-        self._jyFrame = jyFrame
+        self._df = df
     #/def __init__
     
     def __next__( self: Self ) -> dict:
-        if self._index > len( self._jyFrame ) - 1:
+        if self._index > len( self._df ) - 1:
             raise StopIteration
         #
         else:
             self._index += 1
-            return self._jyFrame._fixed | {
-                key: self._jyFrame._shiftIndex[ key ][ val[ self._index-1 ] ] \
-                    for key, val in self._jyFrame._shift.items() if key in self._jyFrame._shiftIndex
+            return self._df._fixed | {
+                key: self._df._shiftIndex[ key ][ val[ self._index-1 ] ] \
+                    for key, val in self._df._shift.items() if key in self._df._shiftIndex
             } | {
                 key: val[ self._index-1 ] \
-                    for key, val in self._jyFrame._shift.items() if key not in self._jyFrame._shiftIndex
+                    for key, val in self._df._shift.items() if key not in self._df._shiftIndex
             }
-        #/if self._index > len( self._jyFrame ) - 1/else
+        #/if self._index > len( self._df ) - 1/else
     #/def __next__
-#/class JyFrameIterator
+#/class DataFrameIterator
 
 # -- Initializers
 
 def fromDict(
-    jyFrameDict: JyFrameDict
-    ) -> JyFrame:
+    dfDict: DataFrameDict
+    ) -> DataFrame:
     """
-        Converts the raw json to JyFrame, without adding any structure
+        Converts the raw json to DataFrame, without adding any structure
     """
-    return JyFrame(
-        fixed = jyFrameDict["_fixed"],
-        shift = jyFrameDict["_shift"],
-        shiftIndex = jyFrameDict["_shiftIndex"],
-        keyTypes = jyFrameDict["_keyTypes"],
-        meta = jyFrameDict["_meta"]
+    dfDict = {
+        "_fixed": {},
+        "_shift": {},
+        "_shiftIndex": {},
+        "_keyTypes": {},
+        "_meta": {}
+    } | dfDict
+    return DataFrame(
+        fixed = dfDict["_fixed"],
+        shift = dfDict["_shift"],
+        shiftIndex = dfDict["_shiftIndex"],
+        keyTypes = dfDict["_keyTypes"],
+        meta = dfDict["_meta"]
     )
 #/def fromDict
 
@@ -1243,7 +1250,7 @@ def fromShiftIndexHeader(
     shiftIndexHeader: list[ str ] = [],
     keyTypes: dict[ str, type ] = {},
     meta: any = {}
-    ) -> JyFrame:
+    ) -> DataFrame:
     from copy import deepcopy
     shiftIndex = {}
     
@@ -1261,7 +1268,7 @@ def fromShiftIndexHeader(
         }
     #
     
-    jyFrame: JyFrame = JyFrame(
+    df: DataFrame = DataFrame(
         fixed = fixed,
         shiftIndex = {
             _key: [] for _key in shiftIndexHeader
@@ -1274,7 +1281,7 @@ def fromShiftIndexHeader(
     )
     
     if shift == {}:
-        return jyFrame
+        return df
     #
     
     # Add items
@@ -1285,14 +1292,14 @@ def fromShiftIndexHeader(
     )
     
     for i in range( _len ):
-        jyFrame.append(
+        df.append(
             {
                 _key: _val[ i ] for _key, _val in shift.items()
             }
         )
     #
     
-    return jyFrame
+    return df
 #/def fromShiftIndexHeader
 
 def fromHeaders(
@@ -1301,9 +1308,9 @@ def fromHeaders(
     shiftIndexHeader: list[ str ] = [],
     keyTypes: dict[ str, type ] = {},
     meta: any = {}
-    ) -> JyFrame:
+    ) -> DataFrame:
     """
-        Initializes a jyFrame with the given headers, but no data (with the possible exception of `fixed`)
+        Initializes a df with the given headers, but no data (with the possible exception of `fixed`)
     """
     if isinstance( fixed, list ):
         # Convert list of strings to a map to `None`
@@ -1316,7 +1323,7 @@ def fromHeaders(
         col for col in shiftHeader if col not in shiftIndexHeader
     ]
     
-    return JyFrame(
+    return DataFrame(
         fixed = fixed,
         shift = { col: [] for col in shiftHeaderAll },
         shiftIndex = { col: [] for col in shiftIndexHeader },
@@ -1328,10 +1335,11 @@ def fromHeaders(
 def fromDict_shift(
     data: dict[ str, list ],
     validate: bool = True
-    ) -> JyFrame:
+    ) -> DataFrame:
     """
         :param dict[ str, list ] data: Reads a dictionary of lists, with keys as column names and values as those columns. Result is making the shift dict from `data`
         :param bool validate: If `True` check each value of `data` is a list of the same length
+        :rtype: DataFrame
     """
     # Check for correct data lengths
     if validate:
@@ -1348,67 +1356,67 @@ def fromDict_shift(
         #/for val in data.values()
     #/if validate
     
-    return JyFrame( shift = data )
+    return DataFrame( shift = data )
 #/def fromDict_shift
 
-def likeJyFrame(
-    jyFrame: JyFrame
-    ) -> JyFrame:
+def likeDataFrame(
+    df: DataFrame
+    ) -> DataFrame:
     """
-        :param JyFrame jyFrame: Frame to intialize like, copying fixed, the shift header, the shift index header, keyTypes, and meta
-        :returns: a blank jyFrame with copied headers
-        :rtype: JyFrame
+        :param DataFrame df: Frame to intialize like, copying fixed, the shift header, the shift index header, keyTypes, and meta
+        :returns: a blank df with copied headers
+        :rtype: DataFrame
     """
     return fromHeaders(
-        fixed = jyFrame._fixed,
+        fixed = df._fixed,
         shiftHeader = [
-            key for key in jyFrame._shift.keys()
+            key for key in df._shift.keys()
         ],
         shiftIndexHeader = [
-            key for key in jyFrame._shiftIndex.keys()
+            key for key in df._shiftIndex.keys()
         ],
-        keyTypes = jyFrame._keyTypes,
-        meta = jyFrame._meta
+        keyTypes = df._keyTypes,
+        meta = df._meta
     )
-#/def likeJyFrame
+#/def likeDataFrame
 
-def copyJyFrame(
-    jyFrame: JyFrame
-    ) -> JyFrame:
+def copyDataFrame(
+    df: DataFrame
+    ) -> DataFrame:
     """
-        :param JyFrame jyFrame: Frame to intialize like, copying fixed, the shift header, the shift index header, keyTypes, and meta
-        :returns: a new jyFrame with copied headers and the same values
-        :rtype: JyFrame
+        :param DataFrame df: Frame to intialize like, copying fixed, the shift header, the shift index header, keyTypes, and meta
+        :returns: a new df with copied headers and the same values
+        :rtype: DataFrame
     """
-    new_jyFrame: JyFrame = likeJyFrame(
-        jyFrame
+    new_df: DataFrame = likeDataFrame(
+        df
     )
     
-    for row in jyFrame:
-        new_jyFrame.append( row )
+    for row in df:
+        new_df.append( row )
     #
-    return new_jyFrame
-#/def copyJyFrame
+    return new_df
+#/def copyDataFrame
 
 def fromFile(
     fp: str,
     decoder: json.JSONDecoder | None = None,
     strict: bool = False,
     update: bool = False
-    ) -> JyFrame:
+    ) -> DataFrame:
     """
         :param str fp: File path to read
         :param json.JSONDecoder|None decoder: Optional custom decoder
         :param bool strict: If `True` require exact correct formatting, will raise if not
         :param bool update: If `True` and `strict = False` it will update the file on the disk with missing fields
         
-        Reads directly as a jyFrame on the disk in json form
+        Reads directly as a df on the disk in json form
     """
     with open( fp, 'r' ) as _file:
-        data: JyFrameDict = json.load( fp = _file, cls = decoder )
+        data: DataFrameDict = json.load( fp = _file, cls = decoder )
     #
     
-    data_all: JyFrameDict
+    data_all: DataFrameDict
     
     # Check is has all required fields when `strict` mode
     _REQUIRED_KEYS = ["_fixed","_shift","_shiftIndex","_keyTypes'", "_meta"]
@@ -1438,7 +1446,7 @@ def fromFile(
         } | data
     #/if strict/else
     
-    jFrame: JyFrame = fromDict( data_all )
+    jFrame: DataFrame = fromDict( data_all )
     
     # Write file if it's missing a section and
     if update and any( key not in data for key in _REQUIRED_KEYS ):
@@ -1451,7 +1459,7 @@ def fromFile(
 def from_file(
     fp: str,
     decoder: json.JSONDecoder | None = None
-    ) -> JyFrame:
+    ) -> DataFrame:
     """
         :param str fp: File path to read
         :param json.JSONDecoder|None decoder: Optional customer decoder
@@ -1464,7 +1472,7 @@ def from_file(
 def read_file(
     fp: str,
     decoder: json.JSONDecoder | None = None
-    ) -> JyFrame:
+    ) -> DataFrame:
     """
         :param str fp: File path to read
         :param json.JSONDecoder|None decoder: Optional customer decoder
@@ -1477,11 +1485,11 @@ def read_file(
 def fromFile_shift(
     fp: str,
     decoder: json.JSONDecoder | None = None
-    ) -> JyFrame:
+    ) -> DataFrame:
     """
-        Reads the jyFrame as the shift data only, with no fixed and no meta
+        Reads the df as the shift data only, with no fixed and no meta
         
-        This is a niche use, for when a jyFrame has been stored as a dictionary of lists at the top level
+        This is a niche use, for when a df has been stored as a dictionary of lists at the top level
     """
     with open( fp, 'r' ) as _file:
         data: dict = json.load( fp = _file, cls = decoder )
@@ -1492,7 +1500,7 @@ def fromFile_shift(
 
 def read_csv(
     fp: str
-    ) -> JyFrame:
+    ) -> DataFrame:
     """
         :param str fp: File path to read
         
@@ -1502,7 +1510,7 @@ def read_csv(
 #/def read_csv
 
 ## -- Transformations
-##    All return new jyFrames, dicts, items, etc
+##    All return new dfs, dicts, items, etc
 
 ## -- Filters
 
@@ -1528,40 +1536,40 @@ def _does_matchRow(
 #/ def _does_matchRow
 
 def filter(
-    jyFrame: JyFrame,
+    df: DataFrame,
     jyFilter: JyFilter
-    ) -> JyFrame:
+    ) -> DataFrame:
     """
-        :param JyFrame jyFrame: jyFrame to filter
+        :param DataFrame df: df to filter
         :param JyFilter jyFilter: Row tester
         
-        Gets a new jyFrame with the same header, adding in rows where `jyFilter` is true
+        Gets a new df with the same header, adding in rows where `jyFilter` is true
     """
     
-    new_jyFrame: JyFrame = likeJyFrame( jyFrame )
-    if len( jyFrame ) == 0:
-        return new_jyFrame
+    new_df: DataFrame = likeDataFrame( df )
+    if len( df ) == 0:
+        return new_df
     #
     
-    for row in jyFrame:
+    for row in df:
         if _does_matchRow(
             jyFilter,
             row
         ):
-            new_jyFrame.append( row )
+            new_df.append( row )
         #/if _does_matchRow( ... )
-    #/for row in jyFrame
+    #/for row in df
     
-    return new_jyFrame
+    return new_df
 #/def filter
 
 def filter_returnFirst(
-    jyFrame: JyFrame,
+    df: DataFrame,
     jyFilter: JyFilter,
     allow_zero: bool = False
     ) -> dict[ str, any ]:
     """
-        :param JyFrame jyFrame: jyFrame to filter
+        :param DataFrame df: df to filter
         :param JyFilter jyFilter: Row tester
         :param bool allow_zero: If `True` return an empty dictionary with no matches. If `False` throw an error instead
         
@@ -1569,19 +1577,19 @@ def filter_returnFirst(
         
         Used like `filter_expectOne()` except you're very confident there's only one or you need the first. Also useful for finding the first row after a specified time
     """
-    if len( jyFrame ) == 0:
+    if len( df ) == 0:
         return {}
     #
     
     row: dict[ str, any ]
-    for row in jyFrame:
+    for row in df:
         if _does_matchRow(
             jyFilter,
             row
         ):
             return row
         #/if _does_matchRow( ... )
-    #/for row in jyFrame
+    #/for row in df
     
     # Made it here, it means no matches
     if allow_zero:
@@ -1589,17 +1597,17 @@ def filter_returnFirst(
     #
     else:
         raise Exception("No matching rows for jyFilter={}".format( jyFilter ))
-    #/if len( new_jyFrame ) >= 1 or allow_zero/else
+    #/if len( new_df ) >= 1 or allow_zero/else
     raise Exception("Unexpected EOF")
 #/def filter_returnFirst
 
 def filter_expectOne(
-    jyFrame: JyFrame,
+    df: DataFrame,
     jyFilter: JyFilter,
     allow_zero: bool = False
     ) -> dict[ str, any ]:
     """
-        :param JyFrame jyFrame: jyFrame to filter
+        :param DataFrame df: df to filter
         :param JyFilter jyFilter: Row tester
         :param bool allow_zero: If `True` return an empty dictionary with no matches. If `False` throw an error instead
         
@@ -1610,9 +1618,9 @@ def filter_expectOne(
         Returns a row as a dict
     """
     
-    new_jyFrame: JyFrame = filter( jyFrame, jyFilter )
+    new_df: DataFrame = filter( df, jyFilter )
     
-    if len( new_jyFrame ) == 0:
+    if len( new_df ) == 0:
         if allow_zero:
             return {}
         else:
@@ -1620,39 +1628,39 @@ def filter_expectOne(
         #
     #
     
-    if len( new_jyFrame ) == 1:
-        return new_jyFrame[0]
+    if len( new_df ) == 1:
+        return new_df[0]
     #
     
-    if len( new_jyFrame ) > 1:
+    if len( new_df ) > 1:
         raise Exception(
-            "Too many results;  len( new_jyFrame )={}".format(
-                len( new_jyFrame )
+            "Too many results;  len( new_df )={}".format(
+                len( new_df )
             )
         )
     #
-    raise Exception("# Bad new_jyFrame={}".format(new_jyFrame))
+    raise Exception("# Bad new_df={}".format(new_df))
 #/def filter_expectOne
 
 # -- Sorting
 
 def sortedBy(
-    jyFrame: JyFrame,
+    df: DataFrame,
     by: list[ str ]
-    ) -> JyFrame:
+    ) -> DataFrame:
     """
-        :param JyFrame jyFrame: Frame to return new sorted version of
+        :param DataFrame df: Frame to return new sorted version of
         :param list[ str ] by: Columns by which to sort rows
         
-        Returns a new jyFrame, sorting by the values in the `by` list of columns
+        Returns a new df, sorting by the values in the `by` list of columns
         Does not change the order of columns at all
     """
     
     
-    # Get jyFrame as list of sorted dicts
-    # Return into a new jyFrame
+    # Get df as list of sorted dicts
+    # Return into a new df
     list_sorted = [
-        row for row in jyFrame
+        row for row in df
     ]
     
     list_sorted.sort(
@@ -1661,12 +1669,12 @@ def sortedBy(
         )
     )
   
-    new_jyFrame: JyFrame = likeJyFrame( jyFrame )
+    new_df: DataFrame = likeDataFrame( df )
     for row in list_sorted:
-        new_jyFrame.append( row )
+        new_df.append( row )
     #
     
-    return new_jyFrame
+    return new_df
 #/def sortedBy
 
 # -- Other transformations
@@ -1716,18 +1724,18 @@ def _unindex(
 #/def _unidex
 
 def consolidate(
-    jyFrame: JyFrame,
+    df: DataFrame,
     threshold: float|int = 0.5,
     make_fixed: bool = True,
     unindex: bool = True
-    ) -> JyFrame:
+    ) -> DataFrame:
     """
-        :param JyFrame jyFrame: Frame to consolidate and make more efficient
-        :param float|int threshold: If the number of unique values is less than, it will be converted to a shiftIndex. Proportion of `len(jyFrame)` if a float, literal number if int.
+        :param DataFrame df: Frame to consolidate and make more efficient
+        :param float|int threshold: If the number of unique values is less than, it will be converted to a shiftIndex. Proportion of `len(df)` if a float, literal number if int.
         :param bool make_fixed: Places columns with a single unique value into `fixed`. If not, it goes into the `shiftIndex` instead.
         :param bool unindex: Whether to convert `shiftIndex` columns to `shift` columns if they surpas threshold in unique count
         
-        Checks columns, converting to a shiftIndex when there are few enough unique values (less than `threshold`, as a proportion of `len(jyFrame)` rounded down if a float, literal amount if an int). If there's one unique value, it will become `fixed`, unless `make_fixed = False` in which case it will be in the `shiftIndex`
+        Checks columns, converting to a shiftIndex when there are few enough unique values (less than `threshold`, as a proportion of `len(df)` rounded down if a float, literal amount if an int). If there's one unique value, it will become `fixed`, unless `make_fixed = False` in which case it will be in the `shiftIndex`
         
         `shiftIndex` will stay the same if `unindex = False`. `fixed` values will stay fixed. `meta`, `keyTypes`, and `customTypes` will be deepcopied.
         
@@ -1738,7 +1746,7 @@ def consolidate(
     threshold_int: int
     if isinstance( threshold, float ):
         from math import ceil
-        threshold_int = ceil( threshold * len( jyFrame ) )
+        threshold_int = ceil( threshold * len( df ) )
     #
     else:
         threshold_int = threshold
@@ -1750,31 +1758,31 @@ def consolidate(
     shiftIndex: dict[ str, list[ int ] ] = {}
     
     
-    for col in jyFrame.keys():
-        if col in jyFrame.keys_fixed():
-            fixed[ col ] = jyFrame.get_fixed( col )
+    for col in df.keys():
+        if col in df.keys_fixed():
+            fixed[ col ] = df.get_fixed( col )
         #
-        elif col in jyFrame._shiftIndex:
+        elif col in df._shiftIndex:
             # Check if there are enough unique values to unindex
-            if unindex and len( jyFrame._shiftIndex[col] ) >= threshold_int:
+            if unindex and len( df._shiftIndex[col] ) >= threshold_int:
                 # Many unique values, unindex
                 shift[ col ] = _unindex(
-                    shift = jyFrame._shift[ col ],
-                    shiftIndex = jyFrame._shiftIndex[ col ]
+                    shift = df._shift[ col ],
+                    shiftIndex = df._shiftIndex[ col ]
                 )
             #
             else:
                 # Not enough unique values, leave as shiftIndex
-                shiftIndex[ col ] = deepcopy( jyFrame._shiftIndex[ col ] )
-                shift[ col ] = deepcopy( jyFrame._shift[ col ] )
+                shiftIndex[ col ] = deepcopy( df._shiftIndex[ col ] )
+                shift[ col ] = deepcopy( df._shift[ col ] )
             #
         #
-        elif col in jyFrame._shift and col not in jyFrame._shiftIndex:
+        elif col in df._shift and col not in df._shiftIndex:
             # Check unique values
             _shiftDict: dict[{
                 "shift": list[ int ],
                 "shiftIndex": list
-            }] = _index( jyFrame._shift[ col ] )
+            }] = _index( df._shift[ col ] )
             if make_fixed and len( _shiftDict[ "shiftIndex"] ) == 1:
                 # One value, it can be fixed
                 fixed[ col ] = _shiftDict["shiftIndex"][ 0 ]
@@ -1786,21 +1794,21 @@ def consolidate(
             #
             else:
                 # Too many unique values, do not index
-                shift[ col ] = deepcopy( jyFrame._shift[ col ] )
+                shift[ col ] = deepcopy( df._shift[ col ] )
             #
         #
         else:
-            raise Exception("Bad jyFrame.keys()={}".format( jyFrame.keys() ))
+            raise Exception("Bad df.keys()={}".format( df.keys() ))
         #/switch col
-    #/for col in jyFrame.keys()
+    #/for col in df.keys()
     
-    return JyFrame(
+    return DataFrame(
         fixed = fixed,
         shift = shift,
         shiftIndex = shiftIndex,
-        keyTypes = deepcopy( jyFrame._keyTypes ),
-        meta = deepcopy( jyFrame._meta ),
-        customTypes = deepcopy( jyFrame._customTypes )
+        keyTypes = deepcopy( df._keyTypes ),
+        meta = deepcopy( df._meta ),
+        customTypes = deepcopy( df._customTypes )
     )
 #/def consolidate
 
@@ -1811,16 +1819,16 @@ def fromSecondOrderStats(
     groups: list[ str ],
     standard_error: bool = True,
     digits: int = 3
-    ) -> JyFrame:
+    ) -> DataFrame:
     if len( stats ) == 0:
-        return JyFrame()
+        return DataFrame()
     #
     
     numerics: list[ str ] = next(
         list( val.keys() ) for val in stats.values()
     )
     
-    jyFrame: JyFrame = fromHeaders(
+    df: DataFrame = fromHeaders(
         shiftHeader = numerics,
         shiftIndexHeader = groups
     )
@@ -1844,14 +1852,14 @@ def fromSecondOrderStats(
                 digits = digits
             )
         #
-        jyFrame.append( row )
+        df.append( row )
     #/for key, val in stats.items()
     
-    return jyFrame
+    return df
 #/def fromSecondOrderStats
 
 def secondOrderStats(
-    jyFrame: JyFrame,
+    df: DataFrame,
     groups: list[ str ],
     numerics: list[ str ]
     ) -> dict[ tuple[any,...], list[float ]]:
@@ -1867,7 +1875,7 @@ def secondOrderStats(
             list[float]
         ]
     ] = {}
-    for row in jyFrame:
+    for row in df:
         row_key = tuple(
             row[ col ] for col in groups
         )
@@ -1889,7 +1897,7 @@ def secondOrderStats(
                 ]
             #/for col in numerics
         #/if row_key in summary/else
-    #/for row in jyFrame
+    #/for row in df
     
     return summary
 #/def secondOrderStats

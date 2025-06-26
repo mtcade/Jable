@@ -1,7 +1,7 @@
 """
-    This module is used to print the `JyFrame` in a readable way, with headers, separators, and all.
+    This module is used to print the `DataFrame` in a readable way, with headers, separators, and all.
     
-    Methods do use direct reference ``PyJable.jable.JyFrame`` from :doc:`jable`. Instead, inputs are annotated with the Protocol `Table`.
+    Methods do use direct reference ``PyJable.jable.DataFrame`` from :doc:`jable`. Instead, inputs are annotated with the Protocol `Table`.
 """
 
 from typing import Literal, Protocol, runtime_checkable, Self
@@ -177,7 +177,7 @@ def prettyprint(
         
         Prints a table with basic separators and alignment.
     """
-    # Handle non `Table` (JyFrame) items
+    # Handle non `Table` (DataFrame) items
     if isinstance( table, list | dict ):
         print( table )
         return

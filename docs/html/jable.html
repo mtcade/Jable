@@ -3,13 +3,14 @@
 <html lang="en" data-content_root="./">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
     <title>The JyFrame Class &#8212; Python Json Tables</title>
-    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=61cd365c" />
-    <link rel="stylesheet" type="text/css" href="_static/alabaster.css?v=12dfc556" />
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=5ecbeea2" />
+    <link rel="stylesheet" type="text/css" href="_static/basic.css?v=686e5160" />
+    <link rel="stylesheet" type="text/css" href="_static/alabaster.css?v=27fed22d" />
     <script src="_static/documentation_options.js?v=d45e8c67"></script>
-    <script src="_static/doctools.js?v=9a2dae69"></script>
+    <script src="_static/doctools.js?v=9bcbadda"></script>
     <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
@@ -32,187 +33,10 @@
 
           <div class="body" role="main">
             
-  <section id="module-PyJable.jable">
-<span id="the-jyframe-class"></span><h1>The <cite>JyFrame</cite> Class<a class="headerlink" href="#module-PyJable.jable" title="Link to this heading">¶</a></h1>
-<p>The <cite>JyFrame</cite> can be treated like tabular data, indexed by a row integer and column string. You access it much like a 2 dimensional <cite>numpy.ndarray</cite> but always with 2 dimensions. There is even an optional field for storing column classes. No parts of the JyFrame base enforce or set any of these, and they are left purely for extensions.</p>
-<blockquote>
-<div><p>There are five parts to the JyFrame:</p>
-<blockquote>
-<div><ol class="arabic">
-<li><p><cite>shift</cite>: A regular dictionary mapping string column names to lists of literal values</p></li>
-<li><p><cite>shiftIndex</cite>: A set of values which the user can mostly ignore. If a column from <cite>shift</cite> is present as a key in <cite>shiftIndex</cite> then for <cite>col: str</cite>, the values in the list of <cite>shift[col]</cite> will be integers, referring to the object in the corresponding index of <cite>shiftIndex[col]</cite>. So if <cite>shift[“name”][3] = 1</cite> and <cite>shiftIndex[“name”] = [“Tom”,”Jerry”]</cite>, then the real value of <cite>shift[“name”][3] = shiftIndex[“name”][1] = “Jerry”</cite>.</p></li>
-<li><p><cite>fixed</cite>: A “column” which has the same value in every row. This allows us to list the value only once. Beware updating this, as it will change the value for every row. There are two ways to consider <cite>fixed</cite>:</p>
-<blockquote>
-<div><ol class="arabic simple">
-<li><p>A space saver, where we simply have the same value for every row. In this case, you can ignore that it’s different from any other columns or values</p></li>
-<li><p>A set of variables associated with the entire table. For example, you might have a relative <cite>“path”</cite> column, which is relative to a fixed <cite>“root”</cite>. If you know this is the case, you should treat it specially with your code, and keep track using the <code class="docutils literal notranslate"><span class="pre">JyFrame.fixed_keys()</span></code> method.</p></li>
-</ol>
-</div></blockquote>
-</li>
-<li><p><cite>keyTypes</cite>: dictionary mapping columns to a type as a python type, or a string. The base JyFrame class makes no checks or enforcement of this; it is only to keep track of columns for the user. As a result, the user can provide <cite>customTypes: dict[ str, type ]</cite> argument to <code class="docutils literal notranslate"><span class="pre">JyFrame()</span></code>. Otherwise, strings as classes will be left as strings in the <cite>keyTypes</cite> dictionary. Upon serialization to a dict, such as for saving, it will turn into <cite>{ col: str(_type) for col, _type in keyTypes.values() }</cite>.</p></li>
-<li><p><cite>meta</cite>: An arbitrary dictionary. The base JyFrame code does not write or read this, but it will preserve it when serializing as well as possible. Store whatever information you want here for subclasses or business logic, but try to make it serializable.</p></li>
-</ol>
-</div></blockquote>
-</div></blockquote>
-<p>Iterating over a JyFrame gives each row as a dictionary. see <code class="docutils literal notranslate"><span class="pre">PyJable.jable.__getitem__()</span></code> for about accessing one or many items in the table. See <code class="docutils literal notranslate"><span class="pre">PyJable.jable.JyFilter()</span></code> for selecting and filtering rows.</p>
+  <section id="the-jyframe-class">
+<h1>The <cite>JyFrame</cite> Class<a class="headerlink" href="#the-jyframe-class" title="Link to this heading">¶</a></h1>
 <section id="accessing-and-settings-values">
 <h2>Accessing and Settings Values<a class="headerlink" href="#accessing-and-settings-values" title="Link to this heading">¶</a></h2>
-<dl class="py method">
-<dt class="sig sig-object py" id="PyJable.jable.JyFrame.__getitem__">
-<span class="sig-prename descclassname"><span class="pre">JyFrame.</span></span><span class="sig-name descname"><span class="pre">__getitem__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">index</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">slice</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">slice</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">any</span></span></span><a class="headerlink" href="#PyJable.jable.JyFrame.__getitem__" title="Link to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>index</strong> (<em>int</em><em>|</em><em>str</em><em>|</em><em>tuple</em><em>[</em><em>int</em><em> | </em><em>slice</em><em> | </em><em>Sequence</em><em>[ </em><em>int</em><em> ]</em><em>, </em><em>str</em><em> | </em><em>Sequence</em><em>[ </em><em>str</em><em> ] </em><em>]</em><em>|</em><em>slice</em><em>|</em><em>Sequence</em><em>[ </em><em>int</em><em> ]</em><em>|</em><em>Sequence</em><em>[ </em><em>str</em><em> ]</em>) – Table accessor</p>
-</dd>
-</dl>
-<p><cite>jyFrame[ row: int, col: str ] -&gt; any</cite> A single item at a location</p>
-<p><cite>jyFrame[ col: str ] -&gt; list</cite> The entire column of values</p>
-<p><cite>jyFrame[ row: int ] -&gt; dict[ str, any ]</cite> One row as a dictionary with all keys</p>
-<p><cite>jyFrame[ rows: Sequence[ int ] | slice ] -&gt; JyFrame</cite> Subset of rows, all columns</p>
-<p><cite>jyFrame[ columns: Sequence[ str ] ] -&gt; JyFrame</cite> Subset of columns, all rows</p>
-<p><cite>jyFrame[ row: int, columns: Sequence[ str ] ] -&gt; dict[ str, any ]</cite> One row as a dictionary with subset of columns</p>
-<p><cite>jyFrame[ rows: Sequence[ int ] | slice, col: str ] -&gt; list</cite>: One column, subset of rows as a list of those items. (If you want to keep some index, then have that index as another column)</p>
-<p><cite>jyFrame[ rows: Sequence[ int ] | slice, columns: Sequence[ str ] ] -&gt; jyFrame</cite> Subset of both columns and columns</p>
-</dd></dl>
-
-<dl class="py class">
-<dt class="sig sig-object py" id="PyJable.jable.JyFrame">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">PyJable.jable.</span></span><span class="sig-name descname"><span class="pre">JyFrame</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fixed</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">any</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">shift</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">shiftIndex</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">keyTypes</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">type</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">meta</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">any</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">customTypes</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">type</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">{}</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#PyJable.jable.JyFrame" title="Link to this definition">¶</a></dt>
-<dd><p>Stores column data as a combination of three parts:</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>fixed</strong> (<em>dict</em><em>[ </em><em>str</em><em>, </em><em>any</em><em> ]</em>) – Columns with the same name for value in every row. You can change its value but that will essentially change it for every row; try to only change it in code that knows it’s a fixed key, and sets and gets it with the fixed methods (<cite>.keys_fixed()</cite>, <cite>.get_fixed(…)</cite>)</p></li>
-<li><p><strong>shift</strong> (<em>dict</em><em>[ </em><em>str</em><em>, </em><em>list</em><em> ]</em>) – Where we have a listed literal item as a value, typically a string, float or int, sometimes lists of them, sometimes dictionaries or any other objects</p></li>
-<li><p><strong>shiftIndex</strong> (<em>dict</em><em>[ </em><em>str list</em><em> ]</em>) – Sometimes, shift columns will have the same value repeated many times. If its column name is in shift index, then the values in shift are integers, referring to the index in shiftIndex of the same column. I.e., if we have <cite>shift[“fur_color”] = [1,0,2]</cite> and <cite>shiftIndex[“fur_color”] = [“green”,”orange”,”purple”,”red”]</cite>, then the <cite>“fur_color”`s are really `[“orange”,”green”,”purple”]</cite></p></li>
-<li><p><strong>keyTypes</strong> (<em>dict</em><em>[ </em><em>str</em><em>, </em><em>str</em><em> | </em><em>type</em><em> ]</em>) – Optional types to set for any columns. No enforcement is done by the JyFrame itself, whether inserting or retriving. It is for your own use. These will be serialized as strings using <cite>str</cite> so add the appropriate functions for custom classes to serialize it as you want, and convert into a class upon reading. Includes support for basic python types</p></li>
-<li><p><strong>meta</strong> (<em>dict</em><em>[ </em><em>str</em><em>, </em><em>any</em><em> ]</em>) – Another arbitrary dictionary to hold domain specific data, in the jyFrame as <cite>._meta</cite>. No methods write or use this, so edit and read at will or subclass.</p></li>
-<li><p><strong>customTypes</strong> (<em>dict</em><em>[ </em><em>str</em><em>, </em><em>type</em><em> ]</em>) – A reference to use for deserializing string types from <cite>keyTypes</cite>. Gets checked before builtin types</p></li>
-</ul>
-</dd>
-</dl>
-<p>see <code class="docutils literal notranslate"><span class="pre">.__getitem__</span></code> for acessing values</p>
-<dl class="py method">
-<dt class="sig sig-object py" id="PyJable.jable.JyFrame.addColumn">
-<span class="sig-name descname"><span class="pre">addColumn</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">col</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">values</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtype</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">type</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#PyJable.jable.JyFrame.addColumn" title="Link to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>col</strong> (<em>str</em>) – Name for the new column</p></li>
-<li><p><strong>values</strong> (<em>list</em>) – A new literal column of values. Have <cite>len(values) == len(self)</cite></p></li>
-<li><p><strong>dtype</strong> (<em>type</em><em>|</em><em>str</em><em>|</em><em>None</em>) – A type for the new column. If <cite>None</cite> (the default), nothing gets added to <cite>._keyTypes</cite></p></li>
-</ul>
-</dd>
-</dl>
-<p>Add a new column as the exact list of values</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="PyJable.jable.JyFrame.any_matchingIndices">
-<span class="sig-name descname"><span class="pre">any_matchingIndices</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">jyFilter</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">any</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">any</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">bool</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="headerlink" href="#PyJable.jable.JyFrame.any_matchingIndices" title="Link to this definition">¶</a></dt>
-<dd><p>Says if at least one row matches jyFilter</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="PyJable.jable.JyFrame.append">
-<span class="sig-name descname"><span class="pre">append</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">row</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">any</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">strict</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#PyJable.jable.JyFrame.append" title="Link to this definition">¶</a></dt>
-<dd><p>Add a dictionary as a row dict as the last index</p>
-<p>If strict, append row which has keys a subset of the keys of self._shift
-If not strict, append keys from row which are present in self._shift, and None for keys missing from row</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="PyJable.jable.JyFrame.as_dict">
-<span class="sig-name descname"><span class="pre">as_dict</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict[{'_fixed':</span> <span class="pre">dict[str,</span> <span class="pre">any],</span> <span class="pre">'_shift':</span> <span class="pre">dict[str,</span> <span class="pre">list],</span> <span class="pre">'_shiftIndex':</span> <span class="pre">dict[str,</span> <span class="pre">list],</span> <span class="pre">'_keyTypes':</span> <span class="pre">dict[str,</span> <span class="pre">str</span> <span class="pre">|</span> <span class="pre">type],</span> <span class="pre">'_meta':</span> <span class="pre">dict[str,</span> <span class="pre">any]}]</span></span></span><a class="headerlink" href="#PyJable.jable.JyFrame.as_dict" title="Link to this definition">¶</a></dt>
-<dd><p>The dictionary, ready to be saved to the disk as json</p>
-<p>Saves types as their stringified version (if the types are serializable)</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="PyJable.jable.JyFrame.does_matchIndex">
-<span class="sig-name descname"><span class="pre">does_matchIndex</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">jyFilter</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">any</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">any</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">bool</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">index</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="headerlink" href="#PyJable.jable.JyFrame.does_matchIndex" title="Link to this definition">¶</a></dt>
-<dd><p>Check to see if a row matches a given jyFilter</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="PyJable.jable.JyFrame.get_fixed">
-<span class="sig-name descname"><span class="pre">get_fixed</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">key</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">default</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">any</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">any</span></span></span><a class="headerlink" href="#PyJable.jable.JyFrame.get_fixed" title="Link to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>key</strong> (<em>str</em>) – Value to get from <cite>._fixed</cite></p></li>
-<li><p><strong>default</strong> (<em>any</em>) – Value to get if key not present in <cite>._fixed</cite>, if not <cite>None</cite></p></li>
-</ul>
-</dd>
-</dl>
-<p>Gets a value known to be associated with a fixed key. This means we don’t have to access any shift lists</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="PyJable.jable.JyFrame.get_matchingIndices">
-<span class="sig-name descname"><span class="pre">get_matchingIndices</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">jyFilter</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">any</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">any</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">bool</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#PyJable.jable.JyFrame.get_matchingIndices" title="Link to this definition">¶</a></dt>
-<dd><p>Get a list of indices which match jyFilter</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="PyJable.jable.JyFrame.keys">
-<span class="sig-name descname"><span class="pre">keys</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#PyJable.jable.JyFrame.keys" title="Link to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
-<dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p>All column names of the jyFrame, including fixed and nonfixed</p>
-</dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>list[ str ]</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="PyJable.jable.JyFrame.keys_fixed">
-<span class="sig-name descname"><span class="pre">keys_fixed</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#PyJable.jable.JyFrame.keys_fixed" title="Link to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
-<dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p>Keys for the fixed dictionary. This is so we don’t have to have <cite>._fixed</cite> used externally</p>
-</dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>list[ str ]</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="PyJable.jable.JyFrame.makeColumn_shift">
-<span class="sig-name descname"><span class="pre">makeColumn_shift</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">col</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#PyJable.jable.JyFrame.makeColumn_shift" title="Link to this definition">¶</a></dt>
-<dd><p>Converts a column to a shift column</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="PyJable.jable.JyFrame.remove">
-<span class="sig-name descname"><span class="pre">remove</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">index</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#PyJable.jable.JyFrame.remove" title="Link to this definition">¶</a></dt>
-<dd><p>Remove a single row, or list of rows. Note that this changes the numeric index of subsequent rows.</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="PyJable.jable.JyFrame.remove_where">
-<span class="sig-name descname"><span class="pre">remove_where</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">jyFilter</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">any</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">any</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">bool</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#PyJable.jable.JyFrame.remove_where" title="Link to this definition">¶</a></dt>
-<dd><p>Remove indices matching jyFilter via <cite>.get_matchingIndices</cite></p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="PyJable.jable.JyFrame.set_where">
-<span class="sig-name descname"><span class="pre">set_where</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">jyFilter</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">any</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">any</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">bool</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">row</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">any</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">limit</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#PyJable.jable.JyFrame.set_where" title="Link to this definition">¶</a></dt>
-<dd><p>Update every row with the given literal row, if it matches jyFilter</p>
-<p>You can set a max number of rows to be updated, speeding things up by ending early</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="PyJable.jable.JyFrame.write_file">
-<span class="sig-name descname"><span class="pre">write_file</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fp</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mode</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'w'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">encoder</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">JSONEncoder</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#PyJable.jable.JyFrame.write_file" title="Link to this definition">¶</a></dt>
-<dd><p>Standard method to write to a file as a json, which can be initialized into a jyFrame via <cite>fromDict(…)</cite> after reading</p>
-</dd></dl>
-
-</dd></dl>
-
 </section>
 <section id="filters-with-jyfilter">
 <h2>Filters with <cite>JyFilter</cite><a class="headerlink" href="#filters-with-jyfilter" title="Link to this heading">¶</a></h2>
@@ -238,149 +62,12 @@ If not strict, append keys from row which are present in self._shift, and None f
 <p>Used for getting new <cite>JyFrame</cite>, rows, and other values without modifying any existing <cite>JyFrame</cite></p>
 <section id="initializing">
 <h3>Initializing<a class="headerlink" href="#initializing" title="Link to this heading">¶</a></h3>
-<dl class="py function">
-<dt class="sig sig-object py" id="PyJable.jable.fromHeaders">
-<span class="sig-prename descclassname"><span class="pre">PyJable.jable.</span></span><span class="sig-name descname"><span class="pre">fromHeaders</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fixed</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">any</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">shiftHeader</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">shiftIndexHeader</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">keyTypes</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">type</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">meta</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">any</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">{}</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#PyJable.jable.JyFrame" title="PyJable.jable.JyFrame"><span class="pre">JyFrame</span></a></span></span><a class="headerlink" href="#PyJable.jable.fromHeaders" title="Link to this definition">¶</a></dt>
-<dd><p>Initializes a jyFrame with the given headers, but no data (with the possible exception of <cite>fixed</cite>)</p>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="PyJable.jable.likeJyFrame">
-<span class="sig-prename descclassname"><span class="pre">PyJable.jable.</span></span><span class="sig-name descname"><span class="pre">likeJyFrame</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">jyFrame</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#PyJable.jable.JyFrame" title="PyJable.jable.JyFrame"><span class="pre">JyFrame</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#PyJable.jable.JyFrame" title="PyJable.jable.JyFrame"><span class="pre">JyFrame</span></a></span></span><a class="headerlink" href="#PyJable.jable.likeJyFrame" title="Link to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>jyFrame</strong> (<a class="reference internal" href="#PyJable.jable.JyFrame" title="PyJable.jable.JyFrame"><em>JyFrame</em></a>) – Frame to intialize like, copying fixed, the shift header, the shift index header, keyTypes, and meta</p>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>a blank jyFrame with copied headers</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference internal" href="#PyJable.jable.JyFrame" title="PyJable.jable.JyFrame">JyFrame</a></p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="PyJable.jable.copyJyFrame">
-<span class="sig-prename descclassname"><span class="pre">PyJable.jable.</span></span><span class="sig-name descname"><span class="pre">copyJyFrame</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">jyFrame</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#PyJable.jable.JyFrame" title="PyJable.jable.JyFrame"><span class="pre">JyFrame</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#PyJable.jable.JyFrame" title="PyJable.jable.JyFrame"><span class="pre">JyFrame</span></a></span></span><a class="headerlink" href="#PyJable.jable.copyJyFrame" title="Link to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>jyFrame</strong> (<a class="reference internal" href="#PyJable.jable.JyFrame" title="PyJable.jable.JyFrame"><em>JyFrame</em></a>) – Frame to intialize like, copying fixed, the shift header, the shift index header, keyTypes, and meta</p>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>a new jyFrame with copied headers and the same values</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference internal" href="#PyJable.jable.JyFrame" title="PyJable.jable.JyFrame">JyFrame</a></p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="PyJable.jable.fromFile">
-<span class="sig-prename descclassname"><span class="pre">PyJable.jable.</span></span><span class="sig-name descname"><span class="pre">fromFile</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fp</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">decoder</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">JSONDecoder</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">strict</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">update</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#PyJable.jable.JyFrame" title="PyJable.jable.JyFrame"><span class="pre">JyFrame</span></a></span></span><a class="headerlink" href="#PyJable.jable.fromFile" title="Link to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>fp</strong> (<em>str</em>) – File path to read</p></li>
-<li><p><strong>decoder</strong> (<em>json.JSONDecoder</em><em>|</em><em>None</em>) – Optional custom decoder</p></li>
-<li><p><strong>strict</strong> (<em>bool</em>) – If <cite>True</cite> require exact correct formatting, will raise if not</p></li>
-<li><p><strong>update</strong> (<em>bool</em>) – If <cite>True</cite> and <cite>strict = False</cite> it will update the file on the disk with missing fields</p></li>
-</ul>
-</dd>
-</dl>
-<p>Reads directly as a jyFrame on the disk in json form</p>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="PyJable.jable.from_file">
-<span class="sig-prename descclassname"><span class="pre">PyJable.jable.</span></span><span class="sig-name descname"><span class="pre">from_file</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fp</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">decoder</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">JSONDecoder</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#PyJable.jable.JyFrame" title="PyJable.jable.JyFrame"><span class="pre">JyFrame</span></a></span></span><a class="headerlink" href="#PyJable.jable.from_file" title="Link to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>fp</strong> (<em>str</em>) – File path to read</p></li>
-<li><p><strong>decoder</strong> (<em>json.JSONDecoder</em><em>|</em><em>None</em>) – Optional customer decoder</p></li>
-</ul>
-</dd>
-</dl>
-<p>Directly reads from a regular json on the disc. Synonym to <cite>fromFile()</cite></p>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="PyJable.jable.fromFile_shift">
-<span class="sig-prename descclassname"><span class="pre">PyJable.jable.</span></span><span class="sig-name descname"><span class="pre">fromFile_shift</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fp</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">decoder</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">JSONDecoder</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#PyJable.jable.JyFrame" title="PyJable.jable.JyFrame"><span class="pre">JyFrame</span></a></span></span><a class="headerlink" href="#PyJable.jable.fromFile_shift" title="Link to this definition">¶</a></dt>
-<dd><p>Reads the jyFrame as the shift data only, with no fixed and no meta</p>
-<p>This is a niche use, for when a jyFrame has been stored as a dictionary of lists at the top level</p>
-</dd></dl>
-
 </section>
 <section id="filter-functions">
 <h3>Filter Functions<a class="headerlink" href="#filter-functions" title="Link to this heading">¶</a></h3>
-<dl class="py function">
-<dt class="sig sig-object py" id="PyJable.jable.filter">
-<span class="sig-prename descclassname"><span class="pre">PyJable.jable.</span></span><span class="sig-name descname"><span class="pre">filter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">jyFrame</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#PyJable.jable.JyFrame" title="PyJable.jable.JyFrame"><span class="pre">JyFrame</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">jyFilter</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">any</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">any</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">bool</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#PyJable.jable.JyFrame" title="PyJable.jable.JyFrame"><span class="pre">JyFrame</span></a></span></span><a class="headerlink" href="#PyJable.jable.filter" title="Link to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>jyFrame</strong> (<a class="reference internal" href="#PyJable.jable.JyFrame" title="PyJable.jable.JyFrame"><em>JyFrame</em></a>) – jyFrame to filter</p></li>
-<li><p><strong>jyFilter</strong> (<em>JyFilter</em>) – Row tester</p></li>
-</ul>
-</dd>
-</dl>
-<p>Gets a new jyFrame with the same header, adding in rows where <cite>jyFilter</cite> is true</p>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="PyJable.jable.filter_returnFirst">
-<span class="sig-prename descclassname"><span class="pre">PyJable.jable.</span></span><span class="sig-name descname"><span class="pre">filter_returnFirst</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">jyFrame</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#PyJable.jable.JyFrame" title="PyJable.jable.JyFrame"><span class="pre">JyFrame</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">jyFilter</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">any</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">any</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">bool</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">allow_zero</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">any</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#PyJable.jable.filter_returnFirst" title="Link to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>jyFrame</strong> (<a class="reference internal" href="#PyJable.jable.JyFrame" title="PyJable.jable.JyFrame"><em>JyFrame</em></a>) – jyFrame to filter</p></li>
-<li><p><strong>jyFilter</strong> (<em>JyFilter</em>) – Row tester</p></li>
-<li><p><strong>allow_zero</strong> (<em>bool</em>) – If <cite>True</cite> return an empty dictionary with no matches. If <cite>False</cite> throw an error instead</p></li>
-</ul>
-</dd>
-</dl>
-<p>Return the first row matching the filter. If none match, it will return <cite>{}</cite> if <cite>allow_zero</cite>, otherwise raise.</p>
-<p>Used like <cite>filter_expectOne()</cite> except you’re very confident there’s only one or you need the first. Also useful for finding the first row after a specified time</p>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="PyJable.jable.filter_expectOne">
-<span class="sig-prename descclassname"><span class="pre">PyJable.jable.</span></span><span class="sig-name descname"><span class="pre">filter_expectOne</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">jyFrame</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#PyJable.jable.JyFrame" title="PyJable.jable.JyFrame"><span class="pre">JyFrame</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">jyFilter</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">any</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">any</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">bool</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">allow_zero</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">any</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#PyJable.jable.filter_expectOne" title="Link to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>jyFrame</strong> (<a class="reference internal" href="#PyJable.jable.JyFrame" title="PyJable.jable.JyFrame"><em>JyFrame</em></a>) – jyFrame to filter</p></li>
-<li><p><strong>jyFilter</strong> (<em>JyFilter</em>) – Row tester</p></li>
-<li><p><strong>allow_zero</strong> (<em>bool</em>) – If <cite>True</cite> return an empty dictionary with no matches. If <cite>False</cite> throw an error instead</p></li>
-</ul>
-</dd>
-</dl>
-<p>Runs jyFilter but raises if you have more than one result. <cite>allow_zero = True</cite> will return with no results, while</p>
-<p>Essentially used when you expect a unique, and present row, sort of like a primary key, and want to double check there’s only one matching row. If you trust there will be only one matching row, use <cite>.filter_returnFirst(…)</cite>.</p>
-<p>Returns a row as a dict</p>
-</dd></dl>
-
 </section>
 <section id="other-transformations">
 <h3>Other transformations<a class="headerlink" href="#other-transformations" title="Link to this heading">¶</a></h3>
-<dl class="py function">
-<dt class="sig sig-object py" id="PyJable.jable.sortedBy">
-<span class="sig-prename descclassname"><span class="pre">PyJable.jable.</span></span><span class="sig-name descname"><span class="pre">sortedBy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">jyFrame</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#PyJable.jable.JyFrame" title="PyJable.jable.JyFrame"><span class="pre">JyFrame</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">by</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#PyJable.jable.JyFrame" title="PyJable.jable.JyFrame"><span class="pre">JyFrame</span></a></span></span><a class="headerlink" href="#PyJable.jable.sortedBy" title="Link to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>jyFrame</strong> (<a class="reference internal" href="#PyJable.jable.JyFrame" title="PyJable.jable.JyFrame"><em>JyFrame</em></a>) – Frame to return new sorted version of</p></li>
-<li><p><strong>by</strong> (<em>list</em><em>[ </em><em>str</em><em> ]</em>) – Columns by which to sort rows</p></li>
-</ul>
-</dd>
-</dl>
-<p>Returns a new jyFrame, sorting by the values in the <cite>by</cite> list of columns
-Does not change the order of columns at all</p>
-</dd></dl>
-
 </section>
 </section>
 </section>
@@ -390,7 +77,7 @@ Does not change the order of columns at all</p>
           
         </div>
       </div>
-      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
         <div class="sphinxsidebarwrapper">
 <h1 class="logo"><a href="index.html">Jable</a></h1>
 
@@ -401,7 +88,16 @@ Does not change the order of columns at all</p>
 
 
 
-<h3>Navigation</h3>
+
+<search id="searchbox" style="display: none" role="search">
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Search"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script><h3>Navigation</h3>
 <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul class="current">
 <li class="toctree-l1 current"><a class="current reference internal" href="#">The <cite>JyFrame</cite> Class</a><ul>
@@ -422,16 +118,6 @@ Does not change the order of columns at all</p>
   </ul></li>
 </ul>
 </div>
-<search id="searchbox" style="display: none" role="search">
-  <h3 id="searchlabel">Quick search</h3>
-    <div class="searchformwrapper">
-    <form class="search" action="search.html" method="get">
-      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
-      <input type="submit" value="Go" />
-    </form>
-    </div>
-</search>
-<script>document.getElementById('searchbox').style.display = "block"</script>
 
 
 
@@ -448,8 +134,8 @@ Does not change the order of columns at all</p>
       &#169;2025, Evan Mason.
       
       |
-      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 7.3.7</a>
-      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 0.7.16</a>
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 8.1.3</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 1.0.0</a>
       
       |
       <a href="_sources/jable.rst.txt"
