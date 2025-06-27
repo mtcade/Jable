@@ -8,7 +8,7 @@ Jable
 
 Jable is a simple too for serializing simple tabular data for casual use on the disk, as an improvement to the .csv format.
 
-The `JyFrame` is a simple, unassuming representation of the Json Table (jable). Acess and set data with simple bracket notation, `jyFrame[ row(s), column(s) ]`.
+The `jyFrame/DataFrame` is a simple, unassuming representation of the Json Table. Access and set data with simple bracket notation, `df[ row(s), column(s) ]`.
 It has rows as numbers, columns as strings. There are two situations to use it over .csv:
 
     1. It can encode anything serializable to Json as an item in a cell, with support for custom encoders and decoders
@@ -20,7 +20,7 @@ Otherwise, it does not offer many powers other tabular data do not. Use it for s
    :maxdepth: 2
    :caption: Contents:
    
-   jable
+   jyFrame
    printing
 
 

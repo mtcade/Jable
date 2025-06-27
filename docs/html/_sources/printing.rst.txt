@@ -1,10 +1,10 @@
-Printing ``Pyjable.jable.JyFrame``
+Printing ``jable.jyFrame.DataFrame``
 ############################################
 
-.. automodule:: PyJable.printing
+.. automodule:: jable.printing
 
-.. autofunction:: PyJable.printing.prettyprint
+.. autofunction:: jable.printing.prettyprint
 
-.. autofunction:: PyJable.printing.latexprint
+.. autofunction:: jable.printing.latexprint
 
 

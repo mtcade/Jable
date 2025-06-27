@@ -1,0 +1,69 @@
+The `DataFrame` Class
+########################
+
+.. automodule:: jable.jyFrame
+
+Accessing and Settings Values
+********************************
+
+The simpliest use of a `df: DataFrame` is getting a single value, which gets indexed by a `col: str` and `row: int`: `df[ col, row ]`, like `df[ 'name', 3 ]` # = 'sid'
+
+.. automethod:: jable.jyFrame.DataFrame.__getitem__
+
+.. autoclass:: jable.jyFrame.DataFrame
+    :members: keys, keys_fixed, get_fixed, get_fixed_withDefaultDict, as_dict, does_matchIndex, any_matchingIndices, get_matchingIndices, set_where, append, makeColumn_shift, addColumn, remove, remove_where, write_file
+
+
+Filters with `JyFilter`
+*************************
+
+.. code:: python
+   
+   JyFilter: type = dict[ str, any ] | Callable[ dict[ str, any ], bool ]
+
+A JyFilter is either a lambda run on a row (dictionary) returning a `bool`, or a dictionary which will return `True` if every value of a row matches those in the filter. It can be written by hand without instantiating any class, just the `lambda` or `dict`. Several methods and functions use `JyFilter`:
+    - ``DataFrame.does_matchIndex()``
+    - ``DataFrame.any_matchingIdices()``
+    - ``DataFrame.get_matchingIndices()``
+    - ``DataFrame.set_where()``
+    - ``DataFrame.remove_where()``
+    - ``filter()``
+    - ``filter_returnFirst()``
+    - ``filter_expectOne()``
+
+
+Other Module Functions
+************************
+
+Used for getting new `DataFrame`, rows, and other values without modifying any existing `DataFrame`
+
+Initializing
+=============
+
+.. autofunction:: jable.jyFrame.fromHeaders
+
+.. autofunction:: jable.jyFrame.likeDataFrame
+
+.. autofunction:: jable.jyFrame.copyDataFrame
+
+.. autofunction:: jable.jyFrame.fromFile
+
+.. autofunction:: jable.jyFrame.from_file
+
+.. autofunction:: jable.jyFrame.fromFile_shift
+
+Filter Functions
+==================
+
+.. autofunction:: jable.jyFrame.filter
+
+.. autofunction:: jable.jyFrame.filter_returnFirst
+
+.. autofunction:: jable.jyFrame.filter_expectOne
+
+Other transformations
+========================
+
+.. autofunction:: jable.jyFrame.sortedBy
+
+
