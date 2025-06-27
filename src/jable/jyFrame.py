@@ -19,10 +19,12 @@ The `DataFrame` can be treated like tabular data, indexed by a row integer and c
 Iterating over a DataFrame gives each row as a dictionary. see ``PyJable.jable.__getitem__()`` for about accessing one or many items in the table. See ``PyJable.jable.JyFilter()`` for selecting and filtering rows.
 """
 
+import polars as pl
+
 import json
 
 from collections.abc import Sequence
-from typing import Callable, Literal, Self
+from typing import Callable, Generator, Literal, Self
 from sys import path
 
 # Dictionary representation of the data in a DataFrame
@@ -45,6 +47,10 @@ _BASE_TYPES: list[ type ] = [
 _TYPES_DICT: dict[ str, type ] = {
     str( _type ): _type for _type in _BASE_TYPES
 }
+
+def schema_from_keyTypes(
+    keyTypes: dict[ str, str | pl.DataType ]
+)
 
 # JyFilter: A way to check if rows match some criterion, either by equality with every value in a dictionary, or evaluating as true with a lambda taking the row dictionary as an input
 JyFilter: type = dict[ str, any ] | Callable[ dict[ str, any ], bool ]
@@ -103,6 +109,7 @@ class DataFrame():
         self._customTypes = customTypes
         
         # Handle key types by using ._customTypes and _TYPES_DICT
+        self._keyTypes = schema_from_keyTypes( keyTypes )
         self._keyTypes = {}
         for col, _type in keyTypes.items():
             if isinstance( _type, str ):
@@ -1159,7 +1166,6 @@ class DataFrame():
         jyFilter: JyFilter
         ) -> None:
         """
-            Remove indices matching jyFilter via `.get_matchingIndices`
         """
         # Have to change indices as we remove them
         # Since we go from low to high, subtract 1 from the matching index for each
@@ -1172,6 +1178,71 @@ class DataFrame():
         )
         return
     #/def remove_where
+    
+    # -- Conversion
+    def generator_for_col(
+        self: Self,
+        col: str
+    ) -> Generator[ any, None, None ]:
+        if False:
+            raise Exception("End of times")
+        #
+        elif col in self._fixed:
+            # Constant value, return it every time
+            return ( self._fixed[ col ] for _ in range(len(self)) )
+        #
+        elif col in self._shiftIndex:
+            # Indexd value, from ._shiftIndex
+            return (
+                self._shiftIndex[ val ] for val in self._shift[ col ]
+            )
+        #
+        elif col in self._shift and col not in self._shiftIndex:
+            #
+            return (
+                val for val in self._shiftIndex[ col ]
+            )
+        else:
+            raise ValueError("No col={} in self.keys()={}".format(col, self.keys()))
+        #/switch col
+    #/def generator_for_col
+    
+    def to_colGenerators(
+        self: Self
+    ) -> dict[ str, Generator[ any, None, None ] ]:
+        return {
+            col: self.generator_for_col( col ) for col in self.keys()
+        }
+    #/def to_colGenerators
+    
+    def to_polars(
+        self: Self,
+        *args,
+        **kwargs
+    ) -> pl.DataFrame:
+        """
+            :param *args: Passed to :py:func:`pl.DataFrame`
+            :param *kwargs: Passed to :py:func:`pl.DataFrame`
+                Includes:
+                    - :param pl.SchemaDict|None schema_overrides: `= None`
+                    - :param bool strict: `= True`
+                    - :param pl.Orientation orient: `= None`
+                    - :param int|None infer_schema_length: `= 100`
+                    - :param bool nan_to_null: `= False`
+            :rtype: pl.DataFrame
+            
+            Gets data from self, and schema from `self._keyTypes`
+        """
+        return pl.DataFrame(
+            data = self.to_colGenerators(),
+            schema = self._keyTypes,
+            *args,
+            **kwargs
+        )
+    #/def to_polars
+        
+    
+    # -- File Management
     
     def write_file(
         self: Self,
