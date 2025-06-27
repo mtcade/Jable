@@ -12,7 +12,7 @@ The `DataFrame` can be treated like tabular data, indexed by a row integer and c
         
         #. A set of variables associated with the entire table. For example, you might have a relative `"path"` column, which is relative to a fixed `"root"`. If you know this is the case, you should treat it specially with your code, and keep track using the ``DataFrame.fixed_keys()`` method.
         
-    #. `keyTypes`: dictionary mapping columns to a type as a python type, or a string. The base DataFrame class makes no checks or enforcement of this; it is only to keep track of columns for the user. As a result, the user can provide `customTypes: dict[ str, type ]` argument to ``DataFrame()``. Otherwise, strings as classes will be left as strings in the `keyTypes` dictionary. Upon serialization to a dict, such as for saving, it will turn into `{ col: str(_type) for col, _type in keyTypes.values() }`.
+    #. `schema`: dictionary mapping columns to a type as a python type, or a string. The base DataFrame class makes no checks or enforcement of this; it is only to keep track of columns for the user. As a result, the user can provide `customTypes: dict[ str, type ]` argument to ``DataFrame()``. Otherwise, strings as classes will be left as strings in the `schema` dictionary. Upon serialization to a dict, such as for saving, it will turn into `{ col: parse_composite_dtype(val) for col, val in schema.items() }`.
     
     #. `meta`: An arbitrary dictionary. The base DataFrame code does not write or read this, but it will preserve it when serializing as well as possible. Store whatever information you want here for subclasses or business logic, but try to make it serializable.
 
@@ -28,29 +28,56 @@ from typing import Callable, Generator, Literal, Self
 from sys import path
 
 # Dictionary representation of the data in a DataFrame
+# Only json primitives, so serializes _schema as a dictionary of strings
 DataFrameDict: type = dict[{
     "_fixed": dict[ str, any ],
     "_shift": dict[ str, list ],
     "_shiftIndex": dict[ str, list ],
-    "_keyTypes": dict[ str, str | type ],
+    "_schema": dict[ str, str ],
     "_meta": dict[ str, any ]
 }]
 
-# SString representation of the most common datatypes
-# Does no enforcement or conversion; it can be set freely and can be any string
-# or type. It's for the user's convenience
-_BASE_TYPES: list[ type ] = [
-    str, int, float,
-    list, dict
-]
+# -- Data Types and Schema
+# Does no enforcement or conversion; simply keeps track
+# Uses `pl.DataType`
 
-_TYPES_DICT: dict[ str, type ] = {
-    str( _type ): _type for _type in _BASE_TYPES
-}
+def _infer_dataType(
+    dataType: str | pl.DataType
+    ) -> pl.DataType:
+    if issubclass( dataType, pl.DataType ):
+        return dataType
+    #
+    if isinstance( dataType, str ):
+        return pl.datatypes.convert.dtype_short_repr_to_dtype( dataType )
+    #
+    raise TypeError("dataType={}, expected str|pl.DataType".format( type( dataType ) ))
+#/def _infer_dataType
 
-def schema_from_keyTypes(
-    keyTypes: dict[ str, str | pl.DataType ]
-)
+def plSchema_from_dict(
+    schema: dict[ str, str | pl.DataType ]
+    ) -> pl.Schema:
+    return {
+        key: _infer_dataType( val ) for key, val in schema.items()
+    }
+#/def plSchema_from_dict
+
+def parse_composite_dtype(
+    dtype: pl.DataType
+    ) -> str:
+    if dtype.is_nested:
+        return f"{pl.datatypes.convert.DataTypeMappings.DTYPE_TO_FFINAME[dtype.base_type()]}[{parse_composite_dtype(dtype.inner)}]"
+    else:
+        return pl.datatypes.convert.DataTypeMappings.DTYPE_TO_FFINAME[dtype]
+    #/if dtype.is_nested/else
+#/def parse_composite_dtype
+
+def schema_to_dict(
+    schema: pl.Schema
+    ) -> dict[ str, str ]:
+    return {
+        key: parse_composite_dtype( val ) for key, va; in schema.items()
+    }
+#/def schema_to_dict
 
 # JyFilter: A way to check if rows match some criterion, either by equality with every value in a dictionary, or evaluating as true with a lambda taking the row dictionary as an input
 JyFilter: type = dict[ str, any ] | Callable[ dict[ str, any ], bool ]
@@ -86,9 +113,9 @@ class DataFrame():
         :param dict[ str, any ] fixed: Columns with the same name for value in every row. You can change its value but that will essentially change it for every row; try to only change it in code that knows it's a fixed key, and sets and gets it with the fixed methods (`.keys_fixed()`, `.get_fixed(...)`)
         :param dict[ str, list ] shift: Where we have a listed literal item as a value, typically a string, float or int, sometimes lists of them, sometimes dictionaries or any other objects
         :param dict[ str list ] shiftIndex: Sometimes, shift columns will have the same value repeated many times. If its column name is in shift index, then the values in shift are integers, referring to the index in shiftIndex of the same column. I.e., if we have `shift["fur_color"] = [1,0,2]` and `shiftIndex["fur_color"] = ["green","orange","purple","red"]`, then the `"fur_color"`s are really `["orange","green","purple"]`
-        :param dict[ str, str | type ] keyTypes: Optional types to set for any columns. No enforcement is done by the DataFrame itself, whether inserting or retriving. It is for your own use. These will be serialized as strings using `str` so add the appropriate functions for custom classes to serialize it as you want, and convert into a class upon reading. Includes support for basic python types
+        :param pl.Schema schema: Optional types to set for any columns. No enforcement is done by the DataFrame itself, whether inserting or retriving. It is for your own use. These will be serialized as strings using `str` so add the appropriate functions for custom classes to serialize it as you want, and convert into a class upon reading. Includes support for basic python types
         :param dict[ str, any ] meta: Another arbitrary dictionary to hold domain specific data, in the df as `._meta`. No methods write or use this, so edit and read at will or subclass.
-        :param dict[ str, type ] customTypes: A reference to use for deserializing string types from `keyTypes`. Gets checked before builtin types
+        :param dict[ str, type ] customTypes: A reference to use for deserializing string types from `schema`. Gets checked before builtin types (NOT CURRENTLY SUPPORTED)
         
         see ``.__getitem__`` for acessing values
     """
@@ -97,7 +124,7 @@ class DataFrame():
         fixed: dict[ str, any ] = {},
         shift: dict[ str, list] = {},
         shiftIndex: dict[ str, list ] = {},
-        keyTypes: dict[ str, type ] = {},
+        schema: pl.Schema = {},
         meta: dict[ str, any ] = {},
         customTypes: dict[ str, type ] = {}
         ):
@@ -109,31 +136,10 @@ class DataFrame():
         self._customTypes = customTypes
         
         # Handle key types by using ._customTypes and _TYPES_DICT
-        self._keyTypes = schema_from_keyTypes( keyTypes )
-        self._keyTypes = {}
-        for col, _type in keyTypes.items():
-            if isinstance( _type, str ):
-                # Check custom types first
-                if _type in self._customTypes:
-                    self._keyTypes[ col ] = self._customTypes[ _type ]
-                #
-                # Not custom, check builtins
-                elif _type in _TYPES_DICT:
-                    self._keyTypes[ col ] = _TYPES_DICT[ _type ]
-                #
-                # Cannot find, leave as string
-                else:
-                    self._keyTypes[ col ] = _type
-                #/if _type in self._customTypes
-            #/if isinstance( _type, str )
-            elif isinstance( _type, type ):
-                # It's a type
-                self._keyTypes[ col ] = _type
-            #
-            else:
-                raise Exception("Unrecognized col, _type={},{}".format(col,_type))
-            #/switch type( _type )
-        #/for col, _type in keyTypes
+        if customTypes != {}:
+            raise Exception("customTypes UC")
+        #
+        self._schema = schema | customTypes
         
         assert all( key in self._shift for key in self._shiftIndex )
         
@@ -164,7 +170,7 @@ class DataFrame():
         """
             Turns common slice notation into an appropriate list of ints
         """
-        return [i for i in range( *rows.indices(self._len) ) ]
+        return [ i for i in range( *rows.indices(self._len) ) ]
     #/def _list_fromSlice
     
     def __len__( self: Self ) -> int:
@@ -263,7 +269,7 @@ class DataFrame():
             fixed = fixed,
             shift = shift,
             shiftIndex = shiftIndex,
-            keyTypes = deepcopy( self._keyTypes ),
+            schema = deepcopy( self._schema ),
             meta = deepcopy( self._meta ),
             customTypes = deepcopy( self._customTypes )
         )
@@ -458,14 +464,11 @@ class DataFrame():
             
             Saves types as their stringified version (if the types are serializable)
         """
-        _keyTypes: dict[ str, str ] = {
-            col: str( _type ) for col, _type in self._keyTypes.items()
-        }
         return {
             "_fixed": self._fixed,
             "_shift": self._shift,
             "_shiftIndex": self._shiftIndex,
-            "_keyTypes": _keyTypes,
+            "_schema": schema_to_dict( self._schema ),
             "_meta": self._meta
         }
     #/def as_dict
@@ -476,6 +479,67 @@ class DataFrame():
         """
         return str( self.as_dict() )
     #/def __str__
+    
+    def generator_for_col(
+        self: Self,
+        col: str
+    ) -> Generator[ any, None, None ]:
+        if False:
+            raise Exception("End of times")
+        #
+        elif col in self._fixed:
+            # Constant value, return it every time
+            return ( self._fixed[ col ] for _ in range(len(self)) )
+        #
+        elif col in self._shiftIndex:
+            # Indexd value, from ._shiftIndex
+            return (
+                self._shiftIndex[ val ] for val in self._shift[ col ]
+            )
+        #
+        elif col in self._shift and col not in self._shiftIndex:
+            #
+            return (
+                val for val in self._shiftIndex[ col ]
+            )
+        else:
+            raise ValueError("No col={} in self.keys()={}".format(col, self.keys()))
+        #/switch col
+    #/def generator_for_col
+    
+    def to_colGenerators(
+        self: Self
+    ) -> dict[ str, Generator[ any, None, None ] ]:
+        return {
+            col: self.generator_for_col( col ) for col in self.keys()
+        }
+    #/def to_colGenerators
+    
+    def to_polars(
+        self: Self,
+        *args,
+        **kwargs
+    ) -> pl.DataFrame:
+        """
+            :param *args: Passed to :py:func:`pl.DataFrame`
+            :param *kwargs: Passed to :py:func:`pl.DataFrame`
+                Includes:
+                    - :param pl.SchemaDict|None schema_overrides: `= None`
+                    - :param bool strict: `= True`
+                    - :param pl.Orientation orient: `= None`
+                    - :param int|None infer_schema_length: `= 100`
+                    - :param bool nan_to_null: `= False`
+            :rtype: pl.DataFrame
+            
+            Gets data from self, and schema from `self._schema`
+        """
+        return pl.DataFrame(
+            data = self.to_colGenerators(),
+            schema = self._schema,
+            *args,
+            **kwargs
+        )
+    #/def to_polars
     
     # -- Indexing
     
@@ -1066,12 +1130,12 @@ class DataFrame():
         self: Self,
         col: str,
         values: list,
-        dtype: type | str | None = None
+        dtype: pl.DataType | str | None = None
         ) -> None:
         """
             :param str col: Name for the new column
             :param list values: A new literal column of values. Have `len(values) == len(self)`
-            :param type|str|None dtype: A type for the new column. If `None` (the default), nothing gets added to `._keyTypes`
+            :param type|str|None dtype: A type for the new column. If `None` (the default), nothing gets added to `._schema`
             
             Add a new column as the exact list of values
         """
@@ -1104,7 +1168,7 @@ class DataFrame():
         self._shift[ col ] = deepcopy( values )
         
         if dtype is not None:
-            self._keyTypes[ col ] = dtype
+            self._schema[ col ] = _infer_dataType( dtype )
         #
         return
     #/def addColumn
@@ -1178,77 +1242,16 @@ class DataFrame():
         )
         return
     #/def remove_where
-    
-    # -- Conversion
-    def generator_for_col(
-        self: Self,
-        col: str
-    ) -> Generator[ any, None, None ]:
-        if False:
-            raise Exception("End of times")
-        #
-        elif col in self._fixed:
-            # Constant value, return it every time
-            return ( self._fixed[ col ] for _ in range(len(self)) )
-        #
-        elif col in self._shiftIndex:
-            # Indexd value, from ._shiftIndex
-            return (
-                self._shiftIndex[ val ] for val in self._shift[ col ]
-            )
-        #
-        elif col in self._shift and col not in self._shiftIndex:
-            #
-            return (
-                val for val in self._shiftIndex[ col ]
-            )
-        else:
-            raise ValueError("No col={} in self.keys()={}".format(col, self.keys()))
-        #/switch col
-    #/def generator_for_col
-    
-    def to_colGenerators(
-        self: Self
-    ) -> dict[ str, Generator[ any, None, None ] ]:
-        return {
-            col: self.generator_for_col( col ) for col in self.keys()
-        }
-    #/def to_colGenerators
-    
-    def to_polars(
-        self: Self,
-        *args,
-        **kwargs
-    ) -> pl.DataFrame:
-        """
-            :param *args: Passed to :py:func:`pl.DataFrame`
-            :param *kwargs: Passed to :py:func:`pl.DataFrame`
-                Includes:
-                    - :param pl.SchemaDict|None schema_overrides: `= None`
-                    - :param bool strict: `= True`
-                    - :param pl.Orientation orient: `= None`
-                    - :param int|None infer_schema_length: `= 100`
-                    - :param bool nan_to_null: `= False`
-            :rtype: pl.DataFrame
-            
-            Gets data from self, and schema from `self._keyTypes`
-        """
-        return pl.DataFrame(
-            data = self.to_colGenerators(),
-            schema = self._keyTypes,
-            *args,
-            **kwargs
-        )
-    #/def to_polars
-        
-    
+
     # -- File Management
     
     def write_file(
         self: Self,
         fp: str,
         mode: str = 'w',
-        encoder: json.JSONEncoder | None = None
+        encoder: json.JSONEncoder | None = None,
+        *args,
+        **kwargs
         ) -> None:
         """
             Standard method to write to a file as a json, which can be initialized into a df via `fromDict(...)` after reading
@@ -1257,7 +1260,9 @@ class DataFrame():
             json.dump(
                 obj = self.as_dict(),
                 fp = _file,
-                cls = encoder
+                cls = encoder,
+                *args,
+                **kwargs
             )
         #/with open( fp, mode ) as _file
         
@@ -1303,14 +1308,14 @@ def fromDict(
         "_fixed": {},
         "_shift": {},
         "_shiftIndex": {},
-        "_keyTypes": {},
+        "_schema": {},
         "_meta": {}
     } | dfDict
     return DataFrame(
         fixed = dfDict["_fixed"],
         shift = dfDict["_shift"],
         shiftIndex = dfDict["_shiftIndex"],
-        keyTypes = dfDict["_keyTypes"],
+        schema = plSchema_from_dict( dfDict["_schema"] ),
         meta = dfDict["_meta"]
     )
 #/def fromDict
@@ -1319,7 +1324,7 @@ def fromShiftIndexHeader(
     fixed: dict[ str, any ] | list[ str ] = {},
     shift: dict[ str, list ] = {},
     shiftIndexHeader: list[ str ] = [],
-    keyTypes: dict[ str, type ] = {},
+    schema: dict[ str, str | pl.DataType ] = {},
     meta: any = {}
     ) -> DataFrame:
     from copy import deepcopy
@@ -1347,7 +1352,7 @@ def fromShiftIndexHeader(
         shift = {
             _key: [] for _key in shiftHeader
         },
-        keyTypes = keyTypes,
+        schema = plSchema_from_dict( schema ),
         meta = meta
     )
     
@@ -1377,7 +1382,7 @@ def fromHeaders(
     fixed: dict[ str, any ] | list[ str ] = {},
     shiftHeader: list[ str ] = [],
     shiftIndexHeader: list[ str ] = [],
-    keyTypes: dict[ str, type ] = {},
+    schema: dict[ str, type | pl.DataType ] = {},
     meta: any = {}
     ) -> DataFrame:
     """
@@ -1398,7 +1403,7 @@ def fromHeaders(
         fixed = fixed,
         shift = { col: [] for col in shiftHeaderAll },
         shiftIndex = { col: [] for col in shiftIndexHeader },
-        keyTypes = keyTypes,
+        schema = plSchema_from_dict( schema ),
         meta = meta
     )
 #/def fromHeaders
@@ -1434,7 +1439,7 @@ def likeDataFrame(
     df: DataFrame
     ) -> DataFrame:
     """
-        :param DataFrame df: Frame to intialize like, copying fixed, the shift header, the shift index header, keyTypes, and meta
+        :param DataFrame df: Frame to intialize like, copying fixed, the shift header, the shift index header, schema, and meta
         :returns: a blank df with copied headers
         :rtype: DataFrame
     """
@@ -1446,7 +1451,7 @@ def likeDataFrame(
         shiftIndexHeader = [
             key for key in df._shiftIndex.keys()
         ],
-        keyTypes = df._keyTypes,
+        schema = df._schema,
         meta = df._meta
     )
 #/def likeDataFrame
@@ -1455,7 +1460,7 @@ def copyDataFrame(
     df: DataFrame
     ) -> DataFrame:
     """
-        :param DataFrame df: Frame to intialize like, copying fixed, the shift header, the shift index header, keyTypes, and meta
+        :param DataFrame df: Frame to intialize like, copying fixed, the shift header, the shift index header, schema, and meta
         :returns: a new df with copied headers and the same values
         :rtype: DataFrame
     """
@@ -1490,7 +1495,7 @@ def fromFile(
     data_all: DataFrameDict
     
     # Check is has all required fields when `strict` mode
-    _REQUIRED_KEYS = ["_fixed","_shift","_shiftIndex","_keyTypes'", "_meta"]
+    _REQUIRED_KEYS = ["_fixed","_shift","_shiftIndex","_schema'", "_meta"]
     if strict:
         if any( key not in data for key in _REQUIRED_KEYS ):
             raise Exception(
@@ -1808,7 +1813,7 @@ def consolidate(
         
         Checks columns, converting to a shiftIndex when there are few enough unique values (less than `threshold`, as a proportion of `len(df)` rounded down if a float, literal amount if an int). If there's one unique value, it will become `fixed`, unless `make_fixed = False` in which case it will be in the `shiftIndex`
         
-        `shiftIndex` will stay the same if `unindex = False`. `fixed` values will stay fixed. `meta`, `keyTypes`, and `customTypes` will be deepcopied.
+        `shiftIndex` will stay the same if `unindex = False`. `fixed` values will stay fixed. `meta`, `schema`, and `customTypes` will be deepcopied.
         
         
     """
@@ -1877,7 +1882,7 @@ def consolidate(
         fixed = fixed,
         shift = shift,
         shiftIndex = shiftIndex,
-        keyTypes = deepcopy( df._keyTypes ),
+        schema = deepcopy( df._schema ),
         meta = deepcopy( df._meta ),
         customTypes = deepcopy( df._customTypes )
     )
